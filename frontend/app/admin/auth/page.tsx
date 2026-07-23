@@ -1,0 +1,142 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Logo } from '@/components/ui/Logo';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useAuthStore } from '@/stores/auth';
+import { api } from '@/lib/api';
+import { Mail, Lock, Eye, EyeOff, Shield } from 'lucide-react';
+
+export default function AdminAuthPage() {
+  const router = useRouter();
+  const { user, setUser, fetchProfile } = useAuthStore();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  useEffect(() => {
+    if (user?.role === 'ADMIN') {
+      router.replace('/admin/dashboard');
+    }
+  }, [user, router]);
+
+  const handleSignin = async () => {
+    if (!email || !password) return;
+    setLoading(true);
+    setError('');
+
+    // DEV BYPASS: skip backend auth and inject a mock admin user
+    const mockAdminUser = {
+      id: 'dev-admin-id',
+      supabaseId: 'dev-admin-supabase-id',
+      email: email,
+      fullName: 'Admin (Dev)',
+      role: 'ADMIN' as const,
+      emailVerified: true,
+      phoneVerified: false,
+      phone: null,
+      profilePhotoUrl: null,
+      courierProfile: null,
+      onboardingSession: null,
+    };
+    localStorage.setItem('access_token', 'dev-bypass-token');
+    setUser(mockAdminUser);
+    router.replace('/admin/dashboard');
+    setLoading(false);
+    return;
+
+    /* ORIGINAL AUTH (re-enable when backend is configured):
+    try {
+      const data = await api.post<any>('/auth/admin/signin', { email, password });
+      if (data.access_token) {
+        localStorage.setItem('access_token', data.access_token);
+      }
+      setUser(data.user);
+      router.replace('/admin/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Sign in failed');
+    } finally {
+      setLoading(false);
+    }
+    */
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4 bg-gray-950">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-10">
+          <div className="flex items-center justify-center mb-6">
+            <div className="w-14 h-14 rounded-2xl bg-red-600 flex items-center justify-center">
+              <Shield size={28} className="text-white" />
+            </div>
+          </div>
+          <h1 className="font-display text-3xl font-extrabold tracking-tight text-white mb-2">
+            Admin Portal
+          </h1>
+          <p className="text-gray-400">
+            Authorized personnel only
+          </p>
+        </div>
+
+        <div className="space-y-5">
+          <Input
+            label="Email"
+            type="email"
+            placeholder="admin@delivery.rw"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            leftIcon={<Mail size={18} />}
+          />
+
+          <Input
+            label="Password"
+            type={showPassword ? 'text' : 'password'}
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            leftIcon={<Lock size={18} />}
+            rightIcon={
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            }
+          />
+
+          {error && (
+            <p className="text-sm text-danger font-medium text-center">{error}</p>
+          )}
+
+          <Button
+            fullWidth
+            size="lg"
+            onClick={handleSignin}
+            loading={loading}
+            disabled={!email || !password}
+          >
+            Sign in
+          </Button>
+        </div>
+
+        <p className="text-center text-sm text-gray-500 mt-8">
+          <Link href="/" className="hover:text-gray-300 transition-colors">
+            &larr; Back to site
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
