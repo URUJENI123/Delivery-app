@@ -16,7 +16,7 @@ const allMenuItems = [
   { icon: 'wallet-outline',           label: 'Wallet',              screen: 'Wallet',            courierOnly: true,  senderOnly: false },
   // { icon: 'card-outline',             label: 'Payment Methods',     screen: 'PaymentMethod',     courierOnly: false, senderOnly: true  },
   { icon: 'location-outline',         label: 'Saved Addresses',     screen: null,                courierOnly: false, senderOnly: true  },
-  { icon: 'shield-checkmark-outline', label: 'Verification',        screen: null,                courierOnly: true,  senderOnly: false },
+  // { icon: 'shield-checkmark-outline', label: 'Verification',        screen: null,                courierOnly: true,  senderOnly: false },
   { icon: 'notifications-outline',    label: 'Notifications',       screen: 'Notifications',     courierOnly: false, senderOnly: false },
   { icon: 'bicycle-outline',          label: 'Vehicle Management',  screen: 'VehicleManagement', courierOnly: true,  senderOnly: false },
   { icon: 'headset-outline',          label: 'Help Center',         screen: 'Support',           courierOnly: false, senderOnly: false },

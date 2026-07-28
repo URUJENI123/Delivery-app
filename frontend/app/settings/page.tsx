@@ -210,7 +210,7 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-bg-page pb-10">
       <AnimatedHero title="Settings" subtitle="Manage your account preferences" fullBleed />
 
-      <div className="max-w-2xl mx-auto px-4 md:px-6 -mt-8 relative z-10">
+      <div className="-mx-4 md:-mx-6 px-4 md:px-6 -mt-8 relative z-10">
         {/* User Card */}
         <Card className="p-5 mb-8">
           <button
