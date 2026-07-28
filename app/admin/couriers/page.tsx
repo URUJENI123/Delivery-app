@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -29,11 +29,9 @@ const NAV_ITEMS = [
 ];
 
 const BOTTOM_LINKS = [
-  { href: '/settings', label: 'Settings', icon: Settings },
+  { href: '/admin/settings', label: 'Settings', icon: Settings },
   { href: '/support', label: 'Help & Support', icon: HelpCircle },
 ];
-
-// ── mock data ─────────────────────────────────────────────────────────────────
 
 const TREND_DATA = [
   { time: '06:00', minutes: 18 },
@@ -43,6 +41,8 @@ const TREND_DATA = [
   { time: '22:00', minutes: 38 },
   { time: '02:00', minutes: 28 },
 ];
+
+const BAR_COLORS = ['#7f1d1d', '#f87171', '#7f1d1d', '#b91c1c', '#f87171', '#7f1d1d'];
 
 const TOP_COURIERS = [
   { initials: 'BK', name: 'Bernard K.', deliveries: 142, rating: 4.98, color: '#7c2d12' },
@@ -56,7 +56,7 @@ const PROBLEMATIC_HUBS = [
   { name: 'Gikondo Storage', issue: 'Missed Pickups: 12', icon: '📦' },
 ];
 
-// ── sidebar (shared with dashboard) ──────────────────────────────────────────
+// ── shared sidebar ────────────────────────────────────────────────────────────
 
 function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
@@ -134,11 +134,7 @@ function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void })
   );
 }
 
-// ── custom bar colours ────────────────────────────────────────────────────────
-
-const BAR_COLORS = ['#7f1d1d', '#f87171', '#7f1d1d', '#b91c1c', '#f87171', '#7f1d1d'];
-
-// ── main page ─────────────────────────────────────────────────────────────────
+// ── page ──────────────────────────────────────────────────────────────────────
 
 export default function FleetPage() {
   const router = useRouter();
@@ -173,7 +169,7 @@ export default function FleetPage() {
           <Menu size={21} />
         </button>
         <img src="/logo.png" alt="Delivery" className="h-8 w-auto object-contain" />
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto">
           <button className="relative p-1.5 text-white/50 hover:text-white">
             <Bell size={18} />
             <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full" />
@@ -200,32 +196,21 @@ export default function FleetPage() {
           </div>
         </div>
 
-        {/* mobile page title */}
-        <div className="lg:hidden px-4 pt-4 pb-2 flex items-center justify-between">
-          <div>
-            <h1 className="font-display text-base font-bold text-white">Fleet Analytics</h1>
-            <p className="text-[11px] text-white/35">Real-time metrics for Kigali</p>
-          </div>
-          <button className="h-8 px-3 border border-white/20 text-white/60 text-[12px] rounded-lg flex items-center gap-1.5">
-            <Download size={13} /> Export
-          </button>
-        </div>
+        <div className="px-4 lg:px-6 pb-10 space-y-4 mt-5">
 
-        <div className="px-4 lg:px-6 pb-10 space-y-4 mt-4">
-
-          {/* ── ROW 1: Delivery Time Trends + Earnings ── */}
+          {/* ── ROW 1: Trends + Earnings ── */}
           <div className="grid lg:grid-cols-[1fr_320px] gap-4">
 
             {/* Delivery Time Trends */}
             <div className="bg-[#1e0e0e] border border-white/10 rounded-xl p-5">
-              <div className="flex items-start justify-between mb-1">
+              <div className="flex items-start justify-between mb-4">
                 <div>
                   <h2 className="text-sm font-semibold text-white">Delivery Time Trends</h2>
                   <p className="text-[12px] text-white/35 mt-0.5">Average turnaround per sector (last 24h)</p>
                 </div>
                 <span className="font-display text-xl font-bold text-red-400">24.5 min</span>
               </div>
-              <div className="h-[200px] mt-4">
+              <div className="h-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={TREND_DATA} barCategoryGap="30%">
                     <XAxis dataKey="time" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
@@ -236,9 +221,7 @@ export default function FleetPage() {
                       formatter={(v: any) => [`${v} min`, 'Avg Time']}
                     />
                     <Bar dataKey="minutes" radius={[4, 4, 0, 0]}>
-                      {TREND_DATA.map((_, i) => (
-                        <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
-                      ))}
+                      {TREND_DATA.map((_, i) => <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />)}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -247,18 +230,14 @@ export default function FleetPage() {
 
             {/* Earnings */}
             <div className="bg-[#1e0e0e] border border-white/10 rounded-xl p-5 flex flex-col">
-              <h2 className="text-sm font-semibold text-white mb-1">Earnings</h2>
+              <h2 className="text-sm font-semibold text-white mb-0.5">Earnings</h2>
               <p className="text-[12px] text-white/35 mb-4">Fleet commission share</p>
-
-              {/* big earnings box */}
               <div className="flex-1 flex items-center justify-center">
                 <div className="w-40 h-40 rounded-xl border-2 border-red-800/60 bg-red-950/30 flex flex-col items-center justify-center">
                   <p className="font-display text-2xl font-bold text-white">RWF 4.2M</p>
                   <p className="text-[12px] text-green-400 mt-1">+12.4%</p>
                 </div>
               </div>
-
-              {/* breakdown */}
               <div className="mt-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -297,29 +276,32 @@ export default function FleetPage() {
               </div>
             </div>
 
-            {/* map with demand overlays */}
-            <div className="relative h-[280px]">
+            {/* map container — fixed pixel height so MapLibre renders */}
+            <div className="relative" style={{ height: 300 }}>
               <MapWidget
-                height="100%"
+                height={300}
                 className="!rounded-none"
                 interactive
                 showCourier={false}
                 showRoute={false}
               />
-              {/* demand labels overlaid */}
-              <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-[38%] left-[30%] bg-[#1a0808]/90 border border-red-800/60 rounded-lg px-3 py-1.5 text-center">
-                  <p className="text-[11px] font-bold text-white">KACYIRU</p>
-                  <p className="text-[10px] text-white/50">142 Orders/hr</p>
-                </div>
-                <div className="absolute top-[28%] left-[18%] bg-[#1a0808]/90 border border-red-800/60 rounded-lg px-3 py-1.5 text-center">
-                  <p className="text-[11px] font-bold text-white">NYARUGENGE</p>
-                  <p className="text-[10px] text-white/50">88 Orders/hr</p>
-                </div>
-                <div className="absolute top-[32%] right-[22%] bg-[#1a0808]/90 border border-red-800/60 rounded-lg px-3 py-1.5 text-center">
-                  <p className="text-[11px] font-bold text-white">REMERA</p>
-                  <p className="text-[10px] text-white/50">56 Orders/hr</p>
-                </div>
+              {/* demand labels — clickable, navigate to fleet monitor */}
+              <div className="absolute inset-0 pointer-events-none z-10">
+                {[
+                  { label: 'KACYIRU', orders: '142 Orders/hr', top: '38%', left: '30%' },
+                  { label: 'NYARUGENGE', orders: '88 Orders/hr', top: '25%', left: '16%' },
+                  { label: 'REMERA', orders: '56 Orders/hr', top: '30%', right: '20%' },
+                ].map((d) => (
+                  <button
+                    key={d.label}
+                    onClick={() => router.push('/admin/fleet-monitor')}
+                    className="absolute pointer-events-auto bg-[#1a0808]/90 border border-red-700/50 rounded-lg px-3 py-1.5 text-center shadow-lg hover:border-red-500 hover:bg-[#2a0a0a]/95 transition-all cursor-pointer"
+                    style={{ top: d.top, left: (d as any).left, right: (d as any).right }}
+                  >
+                    <p className="text-[11px] font-bold text-white tracking-wide">{d.label}</p>
+                    <p className="text-[10px] text-red-400">{d.orders}</p>
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -329,8 +311,14 @@ export default function FleetPage() {
 
             {/* Top Performing Couriers */}
             <div className="bg-[#1e0e0e] border border-white/10 rounded-xl overflow-hidden">
-              <div className="px-5 py-4 border-b border-white/10">
+              <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-white">Top Performing Couriers</h2>
+                <button
+                  onClick={() => router.push('/admin/fleet-performance')}
+                  className="text-[12px] text-white/35 hover:text-white transition-colors flex items-center gap-1"
+                >
+                  VIEW ALL <ChevronRight size={13} />
+                </button>
               </div>
               <table className="w-full text-sm">
                 <thead>
@@ -346,10 +334,8 @@ export default function FleetPage() {
                     <tr key={c.name} className="hover:bg-white/3 transition-colors">
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
-                            style={{ background: c.color }}
-                          >
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
+                            style={{ background: c.color }}>
                             {c.initials}
                           </div>
                           <span className="text-[13px] font-medium text-white">{c.name}</span>
@@ -358,18 +344,14 @@ export default function FleetPage() {
                       <td className="px-5 py-3.5 text-[13px] text-white/70">{c.deliveries}</td>
                       <td className="px-5 py-3.5">
                         <span className="flex items-center gap-1 text-[13px] text-amber-400 font-semibold">
-                          <Star size={12} className="fill-amber-400" />
-                          {c.rating}
+                          <Star size={12} className="fill-amber-400" />{c.rating}
                         </span>
                       </td>
                       <td className="px-5 py-3.5">
-                        <button className="text-[12px] font-semibold text-red-400 hover:text-red-300 transition-colors">
-                          Bonus
-                        </button>
+                        <button className="text-[12px] font-semibold text-red-400 hover:text-red-300 transition-colors">Bonus</button>
                       </td>
                     </tr>
                   ))}
-                  {/* fill from real data if available */}
                   {couriers.filter((c: any) => c.isApprovedByAdmin && c.totalDeliveries > 0).slice(0, 2).map((c: any) => (
                     <tr key={c.id} className="hover:bg-white/3 transition-colors">
                       <td className="px-5 py-3.5">
@@ -388,9 +370,7 @@ export default function FleetPage() {
                         </span>
                       </td>
                       <td className="px-5 py-3.5">
-                        <button className="text-[12px] font-semibold text-red-400 hover:text-red-300 transition-colors">
-                          Bonus
-                        </button>
+                        <button className="text-[12px] font-semibold text-red-400 hover:text-red-300 transition-colors">Bonus</button>
                       </td>
                     </tr>
                   ))}
@@ -417,15 +397,13 @@ export default function FleetPage() {
                   </div>
                 ))}
               </div>
-
-              {/* pending verifications count */}
               {couriers.filter((c: any) => !c.isApprovedByAdmin).length > 0 && (
                 <div className="border-t border-white/10 px-5 py-4">
                   <p className="text-[12px] text-white/40 mb-2">
                     {couriers.filter((c: any) => !c.isApprovedByAdmin).length} couriers pending approval
                   </p>
                   <button
-                    onClick={() => router.push('/admin/couriers?view=pending')}
+                    onClick={() => router.push('/admin/fleet-performance')}
                     className="w-full h-9 bg-red-600 hover:bg-red-700 text-white text-[12px] font-semibold rounded-lg transition-colors"
                   >
                     Review Applications
@@ -433,7 +411,6 @@ export default function FleetPage() {
                 </div>
               )}
             </div>
-
           </div>
         </div>
       </div>
