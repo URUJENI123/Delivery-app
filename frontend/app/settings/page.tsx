@@ -97,7 +97,7 @@ function PasswordModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-gray-950/50" onClick={onClose} />
-      <div className="relative bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6 animate-slide-up">
+      <div className="relative bg-bg-card w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6 animate-slide-up">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-bold text-gray-950">Change Password</h2>
           <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">

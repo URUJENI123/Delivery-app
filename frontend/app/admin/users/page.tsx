@@ -26,7 +26,7 @@ const NAV_ITEMS = [
 
 const BOTTOM_LINKS = [
   { href: '/admin/settings', label: 'Settings', icon: Settings },
-  { href: '/support', label: 'Help & Support', icon: HelpCircle },
+  { href: '/admin/support', label: 'Help & Support', icon: HelpCircle },
 ];
 
 // ── Sidebar Component ───────────────────────────────────────────────────────
@@ -241,8 +241,16 @@ export default function AdminUsersPage() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [inviteName, setInviteName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('Operations Analyst');
-  const [inviteStatus, setInviteStatus] = useState('PENDING');
+  const [inviteRole, setInviteRole] = useState('Fleet Manager');
+  const [invitePermissions, setInvitePermissions] = useState<string[]>([]);
+  const [inviteSending, setInviteSending] = useState(false);
+  const [inviteSent, setInviteSent] = useState(false);
+
+  const togglePermission = (perm: string) => {
+    setInvitePermissions(prev =>
+      prev.includes(perm) ? prev.filter(p => p !== perm) : [...prev, perm]
+    );
+  };
 
   useEffect(() => {
     // Simulate API loading
@@ -322,18 +330,38 @@ export default function AdminUsersPage() {
 
   const handleInviteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const newUser = {
-      id: String(users.length + 1),
-      name: inviteName,
-      email: inviteEmail,
-      status: inviteStatus,
-      role: inviteRole,
-      lastActive: 'Invited just now',
-    };
-    setUsers(prev => [newUser, ...prev]);
+    setInviteSending(true);
+    setTimeout(() => {
+      const newUser = {
+        id: String(users.length + 1),
+        name: inviteName,
+        email: inviteEmail,
+        status: 'PENDING',
+        role: inviteRole,
+        lastActive: 'Invited just now',
+      };
+      setUsers(prev => [newUser, ...prev]);
+      setInviteSending(false);
+      setInviteSent(true);
+      setTimeout(() => {
+        setInviteModalOpen(false);
+        setInviteName('');
+        setInviteEmail('');
+        setInviteRole('Fleet Manager');
+        setInvitePermissions([]);
+        setInviteSent(false);
+      }, 1200);
+    }, 900);
+  };
+
+  const closeInviteModal = () => {
     setInviteModalOpen(false);
     setInviteName('');
     setInviteEmail('');
+    setInviteRole('Fleet Manager');
+    setInvitePermissions([]);
+    setInviteSending(false);
+    setInviteSent(false);
   };
 
   const tabs = [
@@ -727,88 +755,157 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* Invite Modal Overlay */}
+      {/* ── Invite New User Modal ── */}
       {inviteModalOpen && (
         <>
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 animate-in fade-in duration-200" onClick={() => setInviteModalOpen(false)} />
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#1a0c0c] border border-white/10 rounded-2xl p-6 w-[420px] max-w-full shadow-2xl z-50 animate-in zoom-in-95 duration-200 text-left">
-            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
-              <h2 className="text-sm font-bold text-white">Invite New User</h2>
-              <button onClick={() => setInviteModalOpen(false)} className="p-1 hover:bg-white/5 rounded-lg text-white/40 hover:text-white transition-colors">
-                <X size={16} />
-              </button>
-            </div>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/45 backdrop-blur-[2px] z-50 animate-in fade-in duration-200"
+            onClick={closeInviteModal}
+          />
 
-            <form onSubmit={handleInviteSubmit} className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-bold text-white/40 uppercase tracking-wider mb-1.5">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  value={inviteName}
-                  onChange={(e) => setInviteName(e.target.value)}
-                  className="w-full bg-[#120808]/60 border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-white/20 focus:outline-none focus:border-red-500/50 transition-colors"
-                  placeholder="Julian Vance"
-                />
-              </div>
+          {/* Dialog */}
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[400px] max-w-[calc(100vw-2rem)] animate-in zoom-in-95 fade-in duration-200">
+            <div className="bg-[#1c0d0d] border border-white/12 rounded-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.7)] overflow-hidden">
 
-              <div>
-                <label className="block text-[10px] font-bold text-white/40 uppercase tracking-wider mb-1.5">Email Address</label>
-                <input
-                  type="email"
-                  required
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  className="w-full bg-[#120808]/60 border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-white/20 focus:outline-none focus:border-red-500/50 transition-colors"
-                  placeholder="j.vance@kineticvelocity.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-white/40 uppercase tracking-wider mb-1.5">Role</label>
-                <select
-                  value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value)}
-                  className="w-full bg-[#120808]/60 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500/50 transition-colors"
-                >
-                  <option value="Fleet Logistics Manager" className="bg-[#120808] text-white">Fleet Logistics Manager</option>
-                  <option value="Operations Analyst" className="bg-[#120808] text-white">Operations Analyst</option>
-                  <option value="Maintenance Tech" className="bg-[#120808] text-white">Maintenance Tech</option>
-                  <option value="Safety Auditor" className="bg-[#120808] text-white">Safety Auditor</option>
-                  <option value="System Architect" className="bg-[#120808] text-white">System Architect</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-white/40 uppercase tracking-wider mb-1.5">Initial Status</label>
-                <select
-                  value={inviteStatus}
-                  onChange={(e) => setInviteStatus(e.target.value)}
-                  className="w-full bg-[#120808]/60 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500/50 transition-colors"
-                >
-                  <option value="ACTIVE" className="bg-[#120808] text-white">ACTIVE</option>
-                  <option value="PENDING" className="bg-[#120808] text-white">PENDING (Needs Review)</option>
-                  <option value="OFFLINE" className="bg-[#120808] text-white">OFFLINE</option>
-                  <option value="DEACTIVATED" className="bg-[#120808] text-white">DEACTIVATED</option>
-                </select>
-              </div>
-
-              <div className="flex items-center gap-3 pt-4 border-t border-white/10 mt-6">
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 pt-6 pb-5">
+                <h2 className="text-[15px] font-bold text-white tracking-tight">Invite New User</h2>
                 <button
-                  type="button"
-                  onClick={() => setInviteModalOpen(false)}
-                  className="flex-1 h-9 border border-white/10 hover:border-white/20 hover:bg-white/5 rounded-lg text-xs font-semibold text-white/70 hover:text-white transition-all"
+                  onClick={closeInviteModal}
+                  className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white flex items-center justify-center transition-all"
                 >
+                  <X size={15} />
+                </button>
+              </div>
+
+              {/* Form body */}
+              <form onSubmit={handleInviteSubmit}>
+                <div className="px-6 space-y-5">
+
+                  {/* Full Name */}
+                  <div>
+                    <label className="block text-[13px] font-semibold text-white/80 mb-2">Full Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={inviteName}
+                      onChange={(e) => setInviteName(e.target.value)}
+                      placeholder="e.g. John Doe"
+                      className="w-full h-[42px] bg-[#120808]/80 border border-white/10 rounded-xl px-4 text-[13px] text-white placeholder:text-white/20 outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/20 transition-all"
+                    />
+                  </div>
+
+                  {/* Email Address */}
+                  <div>
+                    <label className="block text-[13px] font-semibold text-white/80 mb-2">Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="j.doe@kineticvelocity.com"
+                      className="w-full h-[42px] bg-[#120808]/80 border border-white/10 rounded-xl px-4 text-[13px] text-white placeholder:text-white/20 outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/20 transition-all"
+                    />
+                  </div>
+
+                  {/* Assign Role */}
+                  <div>
+                    <label className="block text-[13px] font-semibold text-white/80 mb-2">Assign Role</label>
+                    <div className="relative">
+                      <select
+                        value={inviteRole}
+                        onChange={(e) => setInviteRole(e.target.value)}
+                        className="w-full h-[42px] bg-[#120808]/80 border border-white/10 rounded-xl px-4 pr-9 text-[13px] text-white outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/20 transition-all appearance-none cursor-pointer"
+                      >
+                        <option value="Fleet Manager" className="bg-[#1c0d0d]">Fleet Manager</option>
+                        <option value="Operations Analyst" className="bg-[#1c0d0d]">Operations Analyst</option>
+                        <option value="Fleet Logistics Manager" className="bg-[#1c0d0d]">Fleet Logistics Manager</option>
+                        <option value="Maintenance Tech" className="bg-[#1c0d0d]">Maintenance Tech</option>
+                        <option value="Safety Auditor" className="bg-[#1c0d0d]">Safety Auditor</option>
+                        <option value="System Architect" className="bg-[#1c0d0d]">System Architect</option>
+                        <option value="Customer Support" className="bg-[#1c0d0d]">Customer Support</option>
+                      </select>
+                      {/* chevron icon */}
+                      <svg className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/35" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Permissions */}
+                  <div>
+                    <label className="block text-[13px] font-semibold text-white/80 mb-3">Permissions</label>
+                    <div className="space-y-3">
+                      {[
+                        { id: 'analytics', label: 'View Analytics' },
+                        { id: 'fleet',     label: 'Manage Fleet' },
+                        { id: 'users',     label: 'Edit Users' },
+                      ].map(({ id, label }) => {
+                        const checked = invitePermissions.includes(id);
+                        return (
+                          <label key={id} className="flex items-center gap-3 cursor-pointer group">
+                            <button
+                              type="button"
+                              role="checkbox"
+                              aria-checked={checked}
+                              onClick={() => togglePermission(id)}
+                              className={cn(
+                                'w-[18px] h-[18px] rounded-[4px] border-2 flex-shrink-0 flex items-center justify-center transition-all',
+                                checked
+                                  ? 'bg-red-600 border-red-600'
+                                  : 'bg-transparent border-white/25 group-hover:border-white/45',
+                              )}
+                            >
+                              {checked && (
+                                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                                  <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              )}
+                            </button>
+                            <span className={cn(
+                              'text-[13px] transition-colors',
+                              checked ? 'text-white font-medium' : 'text-white/60 group-hover:text-white/80',
+                            )}>
+                              {label}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-end gap-3 px-6 py-5 mt-4 border-t border-white/8">
+                  <button
+                    type="button"
+                    onClick={closeInviteModal}
+                    className="h-10 px-6 rounded-xl text-[13px] font-semibold text-white/60 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all"
+                  >
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 h-9 bg-red-600 hover:bg-red-700 active:bg-red-800 rounded-lg text-xs font-semibold text-white transition-all shadow-lg shadow-red-900/20"
-                >
-                  Send Invitation
-                </button>
-              </div>
-            </form>
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={inviteSending || inviteSent}
+                    className={cn(
+                      'h-10 px-6 rounded-xl text-[13px] font-bold text-white transition-all flex items-center gap-2 shadow-lg',
+                      inviteSent
+                        ? 'bg-green-600 shadow-green-900/30'
+                        : 'bg-red-600 hover:bg-red-700 active:bg-red-800 shadow-red-900/30 disabled:opacity-60',
+                    )}
+                  >
+                    {inviteSending && (
+                      <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                      </svg>
+                    )}
+                    {inviteSent ? '✓ Invitation Sent!' : inviteSending ? 'Sending…' : 'Send Invitation'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </>
       )}

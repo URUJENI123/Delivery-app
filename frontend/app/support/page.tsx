@@ -65,7 +65,7 @@ export default function SupportPage() {
           placeholder="Search for help..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full h-12 pl-11 pr-4 bg-white border border-gray-200 rounded-lg text-body-sm text-gray-950 placeholder:text-gray-400 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-colors"
+          className="w-full h-12 pl-11 pr-4 bg-bg-card border border-gray-200 rounded-lg text-body-sm text-gray-950 placeholder:text-gray-400 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-colors"
         />
       </div>
 

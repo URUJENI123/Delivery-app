@@ -184,7 +184,7 @@ export default function ChatPage() {
         </div>
       </div>
 
-      <div className="flex items-center h-12 px-4 bg-white border-b border-gray-150 flex-shrink-0 gap-2">
+      <div className="flex items-center h-12 px-4 bg-bg-card border-b border-gray-150 flex-shrink-0 gap-2">
         <Package size={16} className="text-gray-400" />
         <span className="font-body text-xs text-gray-600">
           {delivery?.trackingCode ? `#${delivery.trackingCode}` : `#${id?.slice(0, 8)}`}

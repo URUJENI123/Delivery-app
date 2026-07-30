@@ -36,7 +36,7 @@ export default function DeliveriesListPage() {
         </div>
 
         {loading ? (
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="bg-bg-card border border-gray-200 rounded-xl overflow-hidden">
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-[76px] !rounded-none border-b border-gray-150 last:border-b-0" />
             ))}
@@ -58,7 +58,7 @@ export default function DeliveriesListPage() {
             </button>
           </div>
         ) : (
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="bg-bg-card border border-gray-200 rounded-xl overflow-hidden">
             {deliveries.map((d) => (
               <Link key={d.id} href={`/deliveries/${d.id}`}>
                 <DeliveryRow

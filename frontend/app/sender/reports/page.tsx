@@ -30,7 +30,7 @@ export default function ReportsPage() {
         <div className="px-4 md:px-6 space-y-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+              <div key={i} className="bg-bg-card border border-gray-200 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="h-3 w-16 bg-gray-150 rounded-md relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/60 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%]" />
                   <div className="w-5 h-5 bg-gray-150 rounded relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/60 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%]" />
@@ -39,7 +39,7 @@ export default function ReportsPage() {
               </div>
             ))}
           </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
+          <div className="bg-bg-card border border-gray-200 rounded-xl p-5 space-y-4">
             <div className="h-6 w-40 bg-gray-150 rounded-md relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/60 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%]" />
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="flex items-center justify-between py-3 border-b border-gray-150 last:border-b-0">

@@ -110,7 +110,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Profile Fields */}
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-6">
+        <div className="bg-bg-card border border-gray-200 rounded-xl overflow-hidden mb-6">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-150">
             <h2 className="text-sm font-bold text-gray-500 tracking-wide uppercase">Personal Information</h2>
             {!editing ? (
@@ -182,7 +182,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Account Info */}
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-6">
+        <div className="bg-bg-card border border-gray-200 rounded-xl overflow-hidden mb-6">
           <p className="text-xs font-bold text-gray-500 tracking-wide uppercase px-5 pt-4 pb-2">Account</p>
           <div className="divide-y divide-gray-150">
             <button className="flex items-center gap-4 w-full px-5 py-4 hover:bg-red-50 transition-colors text-left">
@@ -220,7 +220,7 @@ export default function ProfilePage() {
         {/* Logout */}
         <button
           onClick={async () => { await logout(); router.push('/login'); }}
-          className="flex items-center justify-center gap-2 w-full h-12 bg-white border border-gray-200 rounded-xl text-danger font-semibold text-sm hover:bg-red-50 transition-colors"
+          className="flex items-center justify-center gap-2 w-full h-12 bg-bg-card border border-gray-200 rounded-xl text-danger font-semibold text-sm hover:bg-red-50 transition-colors"
         >
           <X size={18} />
           Log Out

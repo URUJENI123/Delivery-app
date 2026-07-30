@@ -26,7 +26,7 @@ const NAV_ITEMS = [
 ];
 const BOTTOM_LINKS = [
   { href: '/admin/settings', label: 'Settings',      icon: Settings  },
-  { href: '/support',  label: 'Help & Support', icon: HelpCircle },
+  { href: '/admin/support', label: 'Help & Support', icon: HelpCircle },
 ];
 
 // ── mock data ─────────────────────────────────────────────────────────────────

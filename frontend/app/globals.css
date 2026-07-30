@@ -2,6 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-bg-page: #F8F8F8;
+  --color-bg-card: #FFFFFF;
+  --color-bg-overlay: rgba(0,0,0,0.5);
+  --color-body-bg: #FFFFFF;
+  --color-body-text: #0A0A0A;
+  --color-gray-50: #FAFAFA;
+  --color-gray-100: #F5F5F5;
+  --color-gray-150: #F0F0F0;
+  --color-gray-200: #E8E8E8;
+  --color-gray-300: #C4C4C4;
+  --color-gray-400: #9A9A9A;
+  --color-gray-500: #687887;
+  --color-gray-600: #5A5A5A;
+  --color-gray-700: #3D3D3D;
+  --color-gray-800: #2F2937;
+  --color-gray-900: #1A1A1A;
+  --color-gray-950: #0A0A0A;
+  --color-red-50: #FDF5F5;
+  --color-red-100: #FDE8E8;
+}
+
+.dark {
+  --color-bg-page: #120808;
+  --color-bg-card: #1e0e0e;
+  --color-bg-overlay: rgba(0,0,0,0.8);
+  --color-body-bg: #120808;
+  --color-body-text: #FFFFFF;
+  --color-gray-50: #1e0e0e;
+  --color-gray-100: #1e0e0e;
+  --color-gray-150: #1a0505;
+  --color-gray-200: rgba(255,255,255,0.1);
+  --color-gray-300: rgba(255,255,255,0.2);
+  --color-gray-400: rgba(255,255,255,0.3);
+  --color-gray-500: rgba(255,255,255,0.4);
+  --color-gray-600: rgba(255,255,255,0.5);
+  --color-gray-700: rgba(255,255,255,0.55);
+  --color-gray-800: rgba(255,255,255,0.65);
+  --color-gray-900: rgba(255,255,255,0.8);
+  --color-gray-950: #FFFFFF;
+  --color-red-50: rgba(137,32,32,0.15);
+  --color-red-100: rgba(137,32,32,0.25);
+}
+
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
@@ -10,8 +54,8 @@
 
   body {
     font-family: var(--font-inter), sans-serif;
-    color: #0A0A0A;
-    background-color: #FFFFFF;
+    color: var(--color-body-text);
+    background-color: var(--color-body-bg);
   }
 
   h1, h2, h3, h4, h5, h6 {

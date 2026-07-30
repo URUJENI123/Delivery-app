@@ -99,7 +99,7 @@ export default function CourierPhonePage() {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleCheckPhone();
                 }}
-                className="h-12 w-full bg-white border border-gray-200 rounded-r-md px-[14px] text-data text-gray-950 placeholder:text-gray-400 outline-none transition-colors duration-150 focus:border-2 focus:border-red-600 border-l-0"
+                className="h-12 w-full bg-bg-card border border-gray-200 rounded-r-md px-[14px] text-data text-gray-950 placeholder:text-gray-400 outline-none transition-colors duration-150 focus:border-2 focus:border-red-600 border-l-0"
               />
             </div>
           </div>

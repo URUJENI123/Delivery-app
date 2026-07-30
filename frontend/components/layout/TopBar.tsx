@@ -4,9 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/ui/Logo';
-import { Button } from '@/components/ui/button';
-import { Bell, ChevronLeft, MoreVertical, Phone, ChevronDown, Plus, Menu } from 'lucide-react';
-import { useAuthStore } from '@/stores/auth';
+import { Bell, ChevronLeft, MoreVertical, Phone, ChevronDown, Menu, Sun, Moon } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 interface TopBarProps {
   title?: string;
@@ -19,9 +18,36 @@ interface TopBarProps {
   action?: React.ReactNode;
 }
 
+export function ThemeToggle() {
+  const [dark, setDark] = useState(true);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('theme');
+    const isDark = stored ? stored === 'dark' : true;
+    setDark(isDark);
+    document.documentElement.classList.toggle('dark', isDark);
+  }, []);
+
+  const toggle = () => {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.classList.toggle('dark', next);
+    localStorage.setItem('theme', next ? 'dark' : 'light');
+  };
+
+  return (
+    <button
+      onClick={toggle}
+      className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors dark:text-gray-400 dark:hover:bg-white/10"
+      aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
+      {dark ? <Sun size={18} /> : <Moon size={18} />}
+    </button>
+  );
+}
+
 export function TopBar({ title, subtitle, showBack, onBack, onMenuToggle, stepIndicator, variant = 'default', action }: TopBarProps) {
   const pathname = usePathname();
-  const { user } = useAuthStore();
 
   if (variant === 'admin') {
     return (
@@ -75,7 +101,7 @@ export function TopBar({ title, subtitle, showBack, onBack, onMenuToggle, stepIn
   }
 
   return (
-    <header className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4">
+    <header className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-bg-card border-b border-gray-200 flex items-center justify-between px-4">
       <div className="flex items-center gap-2">
         {onMenuToggle && (
           <button onClick={onMenuToggle} className="p-1 text-gray-950 -ml-1">
@@ -100,14 +126,7 @@ export function TopBar({ title, subtitle, showBack, onBack, onMenuToggle, stepIn
         )}
         {variant === 'default' && (
           <>
-            {user?.role === 'SENDER' && (
-              <Link href="/send">
-                <Button variant="primary" size="sm" className="!h-9">
-                  <Plus size={16} />
-                  Create
-                </Button>
-              </Link>
-            )}
+            <ThemeToggle />
             <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
               <Bell size={20} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-600 rounded-full" />
@@ -127,7 +146,7 @@ export function DesktopTopBar({ title, subtitle }: { title?: string; subtitle?: 
   if (isPublicRoute) return null;
 
   return (
-    <header className="hidden lg:flex h-16 sticky top-0 z-30 bg-white border-b border-gray-200 items-center justify-between px-6">
+    <header className="hidden lg:flex h-16 sticky top-0 z-30 bg-bg-card border-b border-gray-200 items-center justify-between px-6">
       <div>
         <h1 className="font-display text-h2 font-bold text-gray-950">{title || 'Dashboard'}</h1>
         {subtitle && <p className="text-caption text-gray-400">{subtitle}</p>}
@@ -137,16 +156,11 @@ export function DesktopTopBar({ title, subtitle }: { title?: string; subtitle?: 
           <span>🌐 EN</span>
           <ChevronDown size={14} />
         </div>
+        <ThemeToggle />
         <button className="relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
           <Bell size={22} className="text-gray-600" />
           <span className="absolute top-2 right-2 w-2 h-2 bg-red-600 rounded-full" />
         </button>
-        <Link href="/send">
-          <Button variant="primary" size="md" className="!h-10">
-            <Plus size={16} />
-            Create Delivery
-          </Button>
-        </Link>
       </div>
     </header>
   );

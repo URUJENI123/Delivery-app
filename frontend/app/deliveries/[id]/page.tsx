@@ -167,7 +167,7 @@ export default function DeliveryDetailPage({ params }: { params: Promise<{ id: s
         <div className="grid lg:grid-cols-5 gap-6">
           <div className="lg:col-span-2 space-y-4">
             {/* STATUS CARD */}
-            <div className="bg-white border border-gray-200 rounded-xl p-5">
+            <div className="bg-bg-card border border-gray-200 rounded-xl p-5">
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <p className="font-display text-lg font-bold text-gray-950">Delivery</p>
@@ -188,7 +188,7 @@ export default function DeliveryDetailPage({ params }: { params: Promise<{ id: s
 
             {/* COURIER INFO */}
             {delivery.courier && (
-              <div className="bg-white border border-gray-200 rounded-xl p-5">
+              <div className="bg-bg-card border border-gray-200 rounded-xl p-5">
                 <p className="font-display text-sm font-semibold text-gray-950 mb-3">
                   {isCourier ? 'You' : 'Courier'}
                 </p>
@@ -211,7 +211,7 @@ export default function DeliveryDetailPage({ params }: { params: Promise<{ id: s
 
             {/* SENDER INFO FOR COURIER */}
             {isCourier && delivery.sender && (
-              <div className="bg-white border border-gray-200 rounded-xl p-5">
+              <div className="bg-bg-card border border-gray-200 rounded-xl p-5">
                 <p className="font-display text-sm font-semibold text-gray-950 mb-3">Sender</p>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-display text-sm font-semibold text-gray-600">
@@ -259,7 +259,7 @@ export default function DeliveryDetailPage({ params }: { params: Promise<{ id: s
                   value={startOtp}
                   onChange={(e) => setStartOtp(e.target.value)}
                   placeholder="6-digit OTP"
-                  className="w-full h-11 mt-3 px-3 bg-white border border-gray-200 rounded-lg font-body text-sm text-center tracking-[8px]"
+                  className="w-full h-11 mt-3 px-3 bg-bg-card border border-gray-200 rounded-lg font-body text-sm text-center tracking-[8px]"
                   maxLength={6}
                 />
                 <Button
@@ -306,7 +306,7 @@ export default function DeliveryDetailPage({ params }: { params: Promise<{ id: s
                   value={completeOtp}
                   onChange={(e) => setCompleteOtp(e.target.value)}
                   placeholder="6-digit OTP"
-                  className="w-full h-11 mt-3 px-3 bg-white border border-gray-200 rounded-lg font-body text-sm text-center tracking-[8px]"
+                  className="w-full h-11 mt-3 px-3 bg-bg-card border border-gray-200 rounded-lg font-body text-sm text-center tracking-[8px]"
                   maxLength={6}
                 />
                 <Button
@@ -339,7 +339,7 @@ export default function DeliveryDetailPage({ params }: { params: Promise<{ id: s
 
             {/* SENDER PAYMENT SECTION */}
             {showPaymentSection && (
-              <div className="bg-white border-2 border-red-600 rounded-xl p-5">
+              <div className="bg-bg-card border-2 border-red-600 rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <CreditCard className="w-5 h-5 text-red-600" />
                   <p className="font-display text-base font-bold text-gray-950">Confirm Payment</p>
@@ -418,7 +418,7 @@ export default function DeliveryDetailPage({ params }: { params: Promise<{ id: s
 
             {/* RATING SECTION (SENDER) */}
             {showRateDelivery && (
-              <div className="bg-white border border-gray-200 rounded-xl p-5">
+              <div className="bg-bg-card border border-gray-200 rounded-xl p-5">
                 <p className="font-display text-sm font-semibold text-gray-950 mb-3">Rate your courier</p>
                 <div className="flex items-center gap-1 mb-3">
                   {[1, 2, 3, 4, 5].map((s) => (
@@ -456,7 +456,7 @@ export default function DeliveryDetailPage({ params }: { params: Promise<{ id: s
             )}
 
             {/* DELIVERY DETAILS */}
-            <div className="bg-white border border-gray-200 rounded-xl p-5">
+            <div className="bg-bg-card border border-gray-200 rounded-xl p-5">
               <p className="font-display text-sm font-semibold text-gray-950 mb-3">Details</p>
               <div className="space-y-3 font-body text-sm">
                 <div className="flex justify-between py-2 border-b border-gray-150">
@@ -531,7 +531,7 @@ export default function DeliveryDetailPage({ params }: { params: Promise<{ id: s
 
           {/* MAP */}
           <div className="lg:col-span-3">
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden h-[400px] lg:h-[600px] relative">
+            <div className="bg-bg-card border border-gray-200 rounded-xl overflow-hidden h-[400px] lg:h-[600px] relative">
               <MapWidget height={600} showCourier={!!delivery.courier} showRoute interactive />
             </div>
           </div>
@@ -540,7 +540,7 @@ export default function DeliveryDetailPage({ params }: { params: Promise<{ id: s
 
       {/* FLOATING CONFIRM BUTTON */}
       {showFloatingConfirm && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-bg-card border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
           <div className="max-w-3xl mx-auto">
             <div className="flex items-center gap-3 mb-3">
               <input

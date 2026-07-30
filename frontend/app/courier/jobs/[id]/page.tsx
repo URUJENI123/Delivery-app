@@ -97,7 +97,7 @@ export default function CourierJobDetailPage({ params }: { params: Promise<{ id:
         <Card className="!p-0 overflow-hidden">
           <div className="h-[200px] bg-gray-100 flex items-center justify-center relative">
             <div className="text-center">
-              <div className="w-12 h-12 rounded-2xl bg-white border border-gray-200 flex items-center justify-center mx-auto mb-2">
+              <div className="w-12 h-12 rounded-2xl bg-bg-card border border-gray-200 flex items-center justify-center mx-auto mb-2">
                 <MapPin size={22} className="text-gray-400" />
               </div>
               <p className="text-sm font-bold text-gray-800">{job.pickupAddress}</p>
