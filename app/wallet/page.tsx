@@ -22,7 +22,7 @@ export default function WalletPage() {
       <DoubleDeckHeader prefix="Your current" title="Balance" className="px-4 pt-4 pb-3 lg:px-6 lg:pt-5" />
 
       <div className="px-4 pb-4 lg:px-6 lg:pb-6 space-y-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <div className="bg-bg-card border border-gray-200 rounded-xl p-6">
           <p className="font-body text-xs text-gray-400">Current Balance</p>
           <p className="font-display text-[32px] font-bold text-gray-950 mt-1">
             {loading ? <span className="inline-block w-40 h-9 bg-gray-150 rounded-md relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/60 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%] align-middle" /> : `RWF ${(balance || 0).toLocaleString()}`}
@@ -77,7 +77,7 @@ export default function WalletPage() {
             </p>
           </div>
         ) : (
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="bg-bg-card border border-gray-200 rounded-xl overflow-hidden">
             {transactions.map((tx) => (
               <div
                 key={tx.id}

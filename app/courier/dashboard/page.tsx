@@ -170,7 +170,7 @@ export default function CourierDashboardPage() {
               { label: 'Month', value: monthDeliveries },
               { label: 'Rate', value: `${completionRate ? (completionRate * 100).toFixed(0) : 0}%` },
             ].map((s) => (
-              <div key={s.label} className="bg-white border border-gray-200 rounded-lg p-3 text-center">
+              <div key={s.label} className="bg-bg-card border border-gray-200 rounded-lg p-3 text-center">
                 <p className="font-display text-lg font-bold text-gray-950">{s.value}</p>
                 <p className="font-body text-[10px] text-gray-400 mt-0.5">{s.label}</p>
               </div>

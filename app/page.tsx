@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   Package, MapPin, CheckCircle, Shield, Navigation, Phone, Truck,
   ArrowRight, Star, Menu, X, Download, Smartphone, Users, Clock,
-  TrendingUp, Zap, Award, ChevronRight, Eye, MessageSquare, Mail
+  TrendingUp, Zap, Award, ChevronRight, Eye, MessageSquare, Mail, Sun, Moon
 } from 'lucide-react';
 
 function FadeInSection({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
@@ -66,11 +66,51 @@ const navLinks = [
   { href: '#testimonials', label: 'Testimonials' },
 ];
 
+function isMobile() {
+  if (typeof navigator === 'undefined') return false;
+  return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+const APP_STORE_URL = 'https://apps.apple.com/app/delivery';
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.delivery.app';
+
+function handleMobileAppCta(setShowModal: (v: boolean) => void) {
+  if (isMobile()) {
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    window.open(isIOS ? APP_STORE_URL : PLAY_STORE_URL, '_blank');
+  } else {
+    setShowModal(true);
+  }
+}
+
 export default function LandingPage() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
   const [inHero, setInHero] = useState(true);
+  const [dark, setDark] = useState(false);
+  const [showMobileModal, setShowMobileModal] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('theme');
+    if (stored === 'dark') {
+      document.documentElement.classList.add('dark');
+      setDark(true);
+    } else {
+      document.documentElement.classList.remove('dark');
+      setDark(false);
+    }
+    return () => {
+      const s = localStorage.getItem('theme');
+      if (s === 'dark') document.documentElement.classList.add('dark');
+      else document.documentElement.classList.remove('dark');
+    };
+  }, []);
+
+  useEffect(() => {
+    const s = localStorage.getItem('theme');
+    if (s !== 'dark') document.documentElement.classList.remove('dark');
+  }, []);
 
   useEffect(() => {
     const onScroll = () => {
@@ -104,12 +144,25 @@ export default function LandingPage() {
             </nav>
 
             <div className="hidden md:flex items-center gap-3">
+              <button
+                onClick={() => {
+                  const next = !dark;
+                  setDark(next);
+                  document.documentElement.classList.toggle('dark', next);
+                  localStorage.setItem('theme', next ? 'dark' : 'light');
+                }}
+                className="h-11 w-11 flex items-center justify-center text-gray-500 hover:text-gray-950 hover:bg-gray-100 rounded-xl transition-colors duration-200 cursor-pointer"
+                aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {dark ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
               <Link href="/auth/signin"
                 className="h-11 px-5 text-sm font-semibold text-gray-950 hover:text-red-600 transition-colors duration-200 cursor-pointer flex items-center"
               >Sign in</Link>
-              <Link href="/send"
+              <button
+                onClick={() => handleMobileAppCta(setShowMobileModal)}
                 className="h-11 px-5 rounded-xl text-sm font-bold bg-red-600 text-white hover:bg-red-800 transition-colors duration-200 cursor-pointer flex items-center gap-2"
-              >Get started <ArrowRight size={14} /></Link>
+              >Get started <ArrowRight size={14} /></button>
             </div>
 
             <button onClick={() => setMobileOpen(!mobileOpen)}
@@ -148,11 +201,24 @@ export default function LandingPage() {
             <Link href="/auth/signin" onClick={() => setMobileOpen(false)}
                 className="block py-3 px-3 text-sm font-semibold text-gray-950 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
               >Sign in</Link>
+            <button
+              onClick={() => {
+                const next = !dark;
+                setDark(next);
+                document.documentElement.classList.toggle('dark', next);
+                localStorage.setItem('theme', next ? 'dark' : 'light');
+              }}
+              className="flex items-center gap-3 w-full py-3 px-3 text-sm font-medium text-gray-700 hover:text-gray-950 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
+            >
+              {dark ? <Sun size={18} /> : <Moon size={18} />}
+              <span>{dark ? 'Light mode' : 'Dark mode'}</span>
+            </button>
           </nav>
           <div className="px-4 py-6 border-t border-gray-200">
-            <Link href="/send" onClick={() => setMobileOpen(false)}
-              className="flex items-center justify-center h-12 bg-red-600 text-white rounded-xl text-sm font-bold cursor-pointer"
-            >Get started <ArrowRight size={14} className="ml-2" /></Link>
+            <button
+              onClick={() => { setMobileOpen(false); handleMobileAppCta(setShowMobileModal); }}
+              className="flex items-center justify-center w-full h-12 bg-red-600 text-white rounded-xl text-sm font-bold cursor-pointer"
+            >Get started <ArrowRight size={14} className="ml-2" /></button>
           </div>
         </div>
       </header>
@@ -210,16 +276,18 @@ export default function LandingPage() {
                 Connect with verified motorcycle couriers. Track in real-time. OTP-secured handover at every step.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Link href="/send"
+                <button
+                  onClick={() => handleMobileAppCta(setShowMobileModal)}
                   className="inline-flex items-center gap-2 h-14 px-8 bg-white text-red-600 rounded-xl font-display font-bold text-base hover:bg-gray-150 transition-colors duration-200 cursor-pointer"
                 >
                   Send a package <ArrowRight size={18} />
-                </Link>
-                <Link href="/auth/signup"
+                </button>
+                <button
+                  onClick={() => handleMobileAppCta(setShowMobileModal)}
                   className="inline-flex items-center gap-2 h-14 px-8 bg-transparent text-white border-2 border-white/30 rounded-xl font-display font-bold text-base hover:bg-white/10 transition-colors duration-200 cursor-pointer"
                 >
                   Become a courier
-                </Link>
+                </button>
               </div>
               <div className="flex flex-wrap gap-6 mt-10">
                 {[
@@ -572,16 +640,18 @@ export default function LandingPage() {
               Join thousands of Kigali residents who trust Delivery for their packages.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-              <Link href="/send"
+              <button
+                onClick={() => handleMobileAppCta(setShowMobileModal)}
                 className="inline-flex items-center gap-2 h-14 px-8 bg-white text-red-600 rounded-xl font-display font-bold text-base hover:bg-gray-150 transition-colors duration-200 cursor-pointer"
               >
                 Send a package <ArrowRight size={18} />
-              </Link>
-                <Link href="/auth/signup"
+              </button>
+                <button
+                  onClick={() => handleMobileAppCta(setShowMobileModal)}
                   className="inline-flex items-center gap-2 h-14 px-8 bg-transparent text-white border-2 border-white/30 rounded-xl font-display font-bold text-base hover:bg-white/10 transition-colors duration-200 cursor-pointer"
                 >
                   Become a courier
-                </Link>
+                </button>
             </div>
             <div className="flex flex-wrap justify-center gap-8 mt-12 text-sm text-white/60">
               <span className="flex items-center gap-2"><CheckCircle size={16} /> No hidden fees</span>
@@ -613,9 +683,9 @@ export default function LandingPage() {
             <div>
               <p className="font-bold text-sm mb-4">Platform</p>
               <div className="space-y-3 text-sm text-gray-400">
-                <Link href="/send" className="block hover:text-white transition-colors cursor-pointer">Send a package</Link>
-                <Link href="/track" className="block hover:text-white transition-colors cursor-pointer">Track delivery</Link>
-                <Link href="/auth/signup" className="block hover:text-white transition-colors cursor-pointer">Become a courier</Link>
+                <button onClick={() => handleMobileAppCta(setShowMobileModal)} className="block hover:text-white transition-colors cursor-pointer">Send a package</button>
+                <button onClick={() => handleMobileAppCta(setShowMobileModal)} className="block hover:text-white transition-colors cursor-pointer">Track delivery</button>
+                <button onClick={() => handleMobileAppCta(setShowMobileModal)} className="block hover:text-white transition-colors cursor-pointer">Become a courier</button>
               </div>
             </div>
             <div>
@@ -637,6 +707,37 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Mobile app prompt modal */}
+      {showMobileModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={() => setShowMobileModal(false)}>
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="relative bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowMobileModal(false)} className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600 cursor-pointer">
+              <X size={20} />
+            </button>
+            <Smartphone size={48} className="mx-auto text-red-600 mb-4" />
+            <h3 className="font-display text-2xl font-bold text-gray-950 mb-2">Mobile App</h3>
+            <p className="text-gray-500 text-sm leading-relaxed">
+              Feel free to proceed with our mobile app. Download it from the App Store or Google Play Store for the best experience.
+            </p>
+            <div className="flex flex-col gap-3 mt-6">
+              <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-3 h-12 bg-gray-950 text-white rounded-xl text-sm font-bold hover:bg-gray-800 transition-colors"
+              >
+                <Download size={18} />
+                Download on App Store
+              </a>
+              <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-3 h-12 bg-gray-950 text-white rounded-xl text-sm font-bold hover:bg-gray-800 transition-colors"
+              >
+                <Smartphone size={18} />
+                Get it on Play Store
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

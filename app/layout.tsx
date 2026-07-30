@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${poppins.variable} ${inter.variable}`}>
+    <html lang="en" className={`dark ${poppins.variable} ${inter.variable}`}>
       <body className="min-h-screen bg-bg-page font-body antialiased">
         <AppLayout>{children}</AppLayout>
       </body>

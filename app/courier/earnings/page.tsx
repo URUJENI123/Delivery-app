@@ -36,7 +36,7 @@ export default function CourierEarningsPage() {
       <AnimatedHero title="Earnings" subtitle="Track your income and performance" fullBleed />
 
       <div className="px-4 pb-4 lg:px-6 lg:pb-6 space-y-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-5">
+        <div className="bg-bg-card border border-gray-200 rounded-xl p-5">
           <p className="font-body text-xs text-gray-400">Wallet Balance</p>
           <p className="font-display text-[36px] font-bold text-red-600 mt-1.5">
             RWF {(balance || 0).toLocaleString()}
@@ -51,7 +51,7 @@ export default function CourierEarningsPage() {
           ].map((item) => {
             const Icon = item.icon;
             return (
-              <div key={item.label} className="bg-white border border-gray-200 rounded-lg p-4 text-center">
+              <div key={item.label} className="bg-bg-card border border-gray-200 rounded-lg p-4 text-center">
                 <p className="font-display text-xl font-bold text-gray-950">{item.value}</p>
                 <p className="font-body text-xs text-gray-400 mt-1 flex items-center justify-center gap-1">
                   <Icon className="w-3 h-3" />
@@ -66,13 +66,13 @@ export default function CourierEarningsPage() {
         {loading ? (
           <div className="space-y-2">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <div key={i} className="bg-bg-card border border-gray-200 rounded-xl overflow-hidden">
                 <div className="h-[76px] bg-gray-150 relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/60 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%]" />
               </div>
             ))}
           </div>
         ) : (
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="bg-bg-card border border-gray-200 rounded-xl overflow-hidden">
             {deliveries.filter(d => d.status === 'DELIVERED').length === 0 ? (
               <div className="flex flex-col items-center py-8 text-center">
                 <Bike className="w-8 h-8 text-gray-300 mb-2" />

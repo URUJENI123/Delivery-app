@@ -48,7 +48,7 @@ export default function CourierPendingPage() {
           <div className="flex justify-center">
             <div className="w-12 h-12 rounded-xl bg-gray-150 relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/60 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%]" />
           </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-8 space-y-4">
+          <div className="bg-bg-card border border-gray-200 rounded-xl p-8 space-y-4">
             <div className="w-20 h-20 rounded-full bg-gray-150 relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/60 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%] mx-auto" />
             <div className="h-7 w-48 mx-auto bg-gray-150 rounded-md relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/60 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%]" />
             <div className="h-4 w-full bg-gray-150 rounded-md relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/60 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%]" />

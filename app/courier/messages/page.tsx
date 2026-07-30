@@ -58,7 +58,7 @@ export default function CourierMessagesPage() {
     return (
       <div className="min-h-screen bg-bg-page">
         <div className="px-4 pb-4 lg:px-6 lg:pb-6">
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="bg-bg-card border border-gray-200 rounded-xl overflow-hidden">
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex items-center gap-3 px-4 h-[76px] border-b border-gray-150 last:border-b-0">
                 <div className="w-11 h-11 rounded-full bg-gray-150 relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/60 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%] flex-shrink-0" />
@@ -92,7 +92,7 @@ export default function CourierMessagesPage() {
             </p>
           </div>
         ) : (
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="bg-bg-card border border-gray-200 rounded-xl overflow-hidden">
             {conversations.map((conv) => (
               <Link
                 key={conv.deliveryId}

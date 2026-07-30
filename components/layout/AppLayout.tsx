@@ -5,12 +5,12 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '@/components/ui/Logo';
 import { useAuthStore } from '@/stores/auth';
-import { SenderSidebar, CourierSidebar, AdminSidebar, senderNav, courierNav, adminNav, sidebarBottomLinks } from './Sidebar';
-import { SenderBottomNav, CourierBottomNav, AdminBottomNav } from './BottomNav';
-import { TopBar } from './TopBar';
+import { AdminSidebar, adminNav, sidebarBottomLinks } from './Sidebar';
+import { AdminBottomNav } from './BottomNav';
+import { TopBar, ThemeToggle } from './TopBar';
 import { ToastProvider } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
-import { X, LogOut, Gift, ChevronRight } from 'lucide-react';
+import { X, LogOut, ChevronRight } from 'lucide-react';
 
 function isPublicRoute(pathname: string): boolean {
   return pathname === '/' || pathname.startsWith('/login') || pathname.startsWith('/onboarding') || pathname.startsWith('/track') || pathname.startsWith('/auth') || pathname.startsWith('/admin') || pathname.startsWith('/support') || pathname.startsWith('/terms') || pathname.startsWith('/privacy');
@@ -36,9 +36,25 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     setMobileDrawer(false);
   }, [pathname]);
 
+  // Redirect non-public, non-admin routes to admin dashboard
+  useEffect(() => {
+    if (user && !isPublicRoute(pathname)) {
+      const adminRoutes = ['/admin/dashboard', '/admin/couriers', '/admin/deliveries', '/admin/users', '/admin/disputes', '/admin/reports', '/admin/settings', '/admin/support', '/admin/fleet-monitor', '/admin/fleet-performance'];
+      const isAdminRoute = adminRoutes.some(r => pathname.startsWith(r));
+      if (!isAdminRoute) {
+        router.replace('/admin/dashboard');
+      }
+    }
+  }, [user, pathname, router]);
+
   if (isPublicRoute(pathname)) {
     return (
       <ToastProvider>
+        {pathname !== '/' && !pathname.startsWith('/admin') && (
+          <div className="fixed top-4 right-4 z-50">
+            <ThemeToggle />
+          </div>
+        )}
         <main className="min-h-screen">{children}</main>
       </ToastProvider>
     );
@@ -57,7 +73,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </aside>
           <div className="flex-1 flex flex-col">
-            <div className="h-14 bg-white border-b border-gray-200 flex items-center px-4 gap-3">
+            <div className="h-14 bg-bg-card border-b border-gray-200 flex items-center px-4 gap-3">
               <div className="lg:hidden w-8 h-8 bg-gray-150 rounded-md relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/60 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%]" />
               <div className="h-5 w-32 bg-gray-150 rounded-md relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/60 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%]" />
               <div className="ml-auto w-10 h-10 rounded-full bg-gray-150 relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/60 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%]" />
@@ -76,20 +92,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const role = user?.role || 'SENDER';
-  const navItems = role === 'ADMIN' ? adminNav : role === 'COURIER' ? courierNav : senderNav;
-
   return (
     <ToastProvider>
-      {role === 'SENDER' && <SenderSidebar />}
-      {role === 'COURIER' && <CourierSidebar />}
-      {role === 'ADMIN' && <AdminSidebar />}
+      <AdminSidebar />
 
       <TopBar onMenuToggle={() => setMobileDrawer(true)} />
 
       {mobileDrawer && (
         <>
-          <div className="lg:hidden fixed inset-0 bg-gray-950/50 z-50" onClick={() => setMobileDrawer(false)} />
+          <div className="lg:hidden fixed inset-0 bg-black/50 z-50" onClick={() => setMobileDrawer(false)} />
           <aside className="lg:hidden fixed top-0 left-0 bottom-0 z-50 animate-slide-in-left flex flex-col w-[240px] bg-red-600">
             <div className="flex items-center justify-between h-14 px-4 border-b border-white/10 flex-shrink-0">
               <Logo size="md" className="brightness-0 invert" />
@@ -99,7 +110,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-              {navItems.map((item) => {
+              {adminNav.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href, pathname);
                 return (
@@ -138,24 +149,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 );
               })}
 
-              {/* Invite & Earn — Sender only */}
-              {role === 'SENDER' && (
-                <div className="p-3">
-                  <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-3 mb-3">
-                    <div className="flex items-center gap-2">
-                      <Gift size={20} className="text-white flex-shrink-0" />
-                      <div>
-                        <p className="text-body-sm font-semibold text-white">Invite & Earn</p>
-                        <p className="text-micro text-white/70">Invite friends and earn rewards</p>
-                      </div>
-                    </div>
-                    <button className="mt-2 w-full h-8 bg-white text-red-600 rounded-md text-btn-sm font-semibold hover:bg-white/90 transition-colors">
-                      Invite Now
-                    </button>
-                  </div>
-                </div>
-              )}
-
               <button
                 onClick={async () => { await logout(); router.push('/auth/signin'); }}
                 className="flex items-center h-11 px-3 rounded-md transition-all duration-150 w-full text-white/70 hover:bg-white/10 hover:text-white"
@@ -165,19 +158,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </button>
             </nav>
 
-            {/* User profile — Sender & Courier only */}
-            {role !== 'ADMIN' && (
-              <div className="border-t border-white/10 p-3 flex items-center">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-display font-semibold text-base flex-shrink-0">
-                  {user?.fullName?.charAt(0)?.toUpperCase() || 'U'}
-                </div>
-                <div className="ml-2.5 flex-1 min-w-0">
-                  <p className="text-body-sm font-semibold text-white truncate">{user?.fullName || 'User'}</p>
-                  <p className="text-tiny text-white/60">{role === 'COURIER' ? 'Courier' : 'Sender'}</p>
-                </div>
-                <ChevronRight size={16} className="text-white/40 flex-shrink-0" />
+            <div className="border-t border-white/10 p-3 flex items-center">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-display font-semibold text-base flex-shrink-0">
+                {user?.fullName?.charAt(0)?.toUpperCase() || 'A'}
               </div>
-            )}
+              <div className="ml-2.5 flex-1 min-w-0">
+                <p className="text-body-sm font-semibold text-white truncate">{user?.fullName || 'Admin'}</p>
+                <p className="text-tiny text-white/60">Administrator</p>
+              </div>
+              <ChevronRight size={16} className="text-white/40 flex-shrink-0" />
+            </div>
           </aside>
         </>
       )}
@@ -196,9 +186,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </main>
 
-      {role === 'SENDER' && <SenderBottomNav />}
-      {role === 'COURIER' && <CourierBottomNav />}
-      {role === 'ADMIN' && <AdminBottomNav />}
+      <AdminBottomNav />
     </ToastProvider>
   );
 }

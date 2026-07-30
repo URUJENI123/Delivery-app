@@ -25,7 +25,7 @@ export default function PaymentsPage() {
       <AnimatedHero title="Payments" subtitle="Your wallet and transaction history" fullBleed />
 
       <div className="px-4 md:px-6 space-y-6">
-        <div className="bg-white border border-gray-200 rounded-xl p-5">
+        <div className="bg-bg-card border border-gray-200 rounded-xl p-5">
           <p className="font-body text-xs text-gray-400">Wallet Balance</p>
           <p className="font-display text-[36px] font-bold text-red-600 mt-1">
             RWF {(balance || 0).toLocaleString()}
@@ -38,7 +38,7 @@ export default function PaymentsPage() {
           {loading ? (
             <div className="space-y-2">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="bg-white border border-gray-200 rounded-xl p-4">
+                <div key={i} className="bg-bg-card border border-gray-200 rounded-xl p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-gray-150 relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/60 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%] flex-shrink-0" />
                     <div className="flex-1 space-y-2">

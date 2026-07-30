@@ -28,7 +28,7 @@ export default function TrackPage() {
           onChange={(e) => setCode(e.target.value)}
           placeholder="Enter tracking code"
           onKeyDown={(e) => e.key === 'Enter' && handleTrack()}
-          className="w-full h-[52px] border border-gray-200 rounded-lg px-4 bg-white text-body-sm text-gray-950 placeholder:text-gray-400 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-colors"
+          className="w-full h-[52px] border border-gray-200 rounded-lg px-4 bg-bg-card text-body-sm text-gray-950 placeholder:text-gray-400 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-colors"
         />
         <Button fullWidth size="lg" disabled={!code.trim()} onClick={handleTrack}>
           Track

@@ -135,7 +135,7 @@ export default function TrackingPage() {
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 z-10">
-          <div className="bg-white rounded-t-[20px] border-t border-gray-200 max-h-[60vh] overflow-y-auto">
+          <div className="bg-bg-card rounded-t-[20px] border-t border-gray-200 max-h-[60vh] overflow-y-auto">
             <div className="flex justify-center pt-2.5 pb-1">
               <div className="w-8 h-1 rounded-full bg-gray-200" />
             </div>
@@ -145,13 +145,13 @@ export default function TrackingPage() {
       </div>
 
       <div className="hidden lg:flex h-screen">
-        <div className="w-[380px] flex-shrink-0 bg-white border-r border-gray-200 overflow-y-auto pt-4">
+        <div className="w-[380px] flex-shrink-0 bg-bg-card border-r border-gray-200 overflow-y-auto pt-4">
           {sheetContent}
         </div>
         <div className="flex-1 relative">
           <MapWidget height={1000} showCourier showRoute interactive className="absolute inset-0" />
           <div className="absolute top-4 left-4 z-10">
-            <button onClick={() => router.back()} className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center">
+            <button onClick={() => router.back()} className="w-10 h-10 rounded-full bg-bg-card border border-gray-200 flex items-center justify-center">
               <ChevronLeft className="w-5 h-5 text-gray-950" />
             </button>
           </div>

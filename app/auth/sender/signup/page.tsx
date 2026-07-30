@@ -92,7 +92,7 @@ export default function SenderSignupPage() {
               <div className="w-full border-t border-gray-200" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-400 font-medium">or sign up with email</span>
+              <span className="px-4 bg-bg-card text-gray-400 font-medium">or sign up with email</span>
             </div>
           </div>
 

@@ -79,7 +79,7 @@ export default function SenderDashboardPage() {
               <button
                 key={a.label}
                 onClick={() => router.push(a.href)}
-                className="flex flex-col items-center justify-center gap-2 h-24 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:shadow-sm transition-all"
+                className="flex flex-col items-center justify-center gap-2 h-24 bg-bg-card border border-gray-200 rounded-xl hover:border-gray-300 hover:shadow-sm transition-all"
               >
                 <div className="w-11 h-11 rounded-xl bg-red-100 flex items-center justify-center">
                   <Icon size={22} className="text-red-600" />
@@ -108,7 +108,7 @@ export default function SenderDashboardPage() {
               onViewAll={() => router.push('/deliveries')}
               className="mb-3"
             />
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="bg-bg-card border border-gray-200 rounded-lg overflow-hidden">
               {recentDeliveries.length === 0 ? (
                 <div className="flex flex-col items-center py-12 px-6 text-center">
                   <div className="w-16 h-16 bg-red-100 rounded-xl flex items-center justify-center mb-4">
