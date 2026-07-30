@@ -363,7 +363,7 @@ export default function AdminSettingsPage() {
             </button>
           </div>
 
-          <div className="space-y-6 max-w-3xl">
+          <div className="space-y-6">
             {/* ── Platform Settings ── */}
             <SettingsSection icon={Globe} title="Platform" description="Basic platform identity and contact info">
               <FieldRow label="Platform Name" value={platformName} onChange={setPlatformName} placeholder="Delivery" type="text" />
