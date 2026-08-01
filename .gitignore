@@ -8,3 +8,8 @@ dist/
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
+APP-LOGIC.md
+BACKEND-LOGIC.md
+MOBILE-LOGIC.md
+supabase-migrations.sql
+AGENT-LOGIC.md
