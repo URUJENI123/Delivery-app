@@ -1,9 +1,10 @@
 node_modules/
-.next/
 dist/
-*.tsbuildinfo
-next-env.d.ts
+.next/
+*.log
 .env
 .env.local
 .env.*.local
-*.log
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
