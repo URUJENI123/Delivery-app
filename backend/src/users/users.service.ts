@@ -1,21 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DbService } from '../db/db.service';
+import { PrismaService } from '../db/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly db: DbService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async updateProfile(userId: string, dto: UpdateUserDto) {
-    const user = await this.db.findOne('users', 'id', userId);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
 
-    return this.db.update('users', 'id', userId, dto);
+    return this.prisma.user.update({ where: { id: userId }, data: dto as any });
   }
 
   async uploadPhoto(userId: string, photoUrl: string) {
-    return this.db.update('users', 'id', userId, { profilePhotoUrl: photoUrl });
+    return this.prisma.user.update({ where: { id: userId }, data: { profilePhotoUrl: photoUrl } });
   }
 }

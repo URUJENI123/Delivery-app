@@ -11,7 +11,7 @@ import { AdminSigninDto } from './dto/admin-signin.dto';
 import { GoogleAuthDto } from './dto/google-auth.dto';
 import { GoogleCallbackDto } from './dto/google-callback.dto';
 import { RequestPasswordResetDto, UpdatePasswordDto, ResendConfirmationDto } from './dto/password-reset.dto';
-import { SupabaseAuthGuard } from './guards/supabase-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Roles } from './decorators/roles.decorator';
@@ -67,9 +67,7 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   async googleAuth(@Body() dto: GoogleAuthDto, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.googleAuth(dto.idToken);
-    if (result.access_token && result.refresh_token) {
-      this.setAuthCookies(res, result.access_token, result.refresh_token);
-    }
+    this.setAuthCookies(res, result.access_token, result.refresh_token);
     return result;
   }
 
@@ -77,16 +75,8 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   async googleCallback(@Body() dto: GoogleCallbackDto, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.googleCallback(dto.accessToken);
-    if (dto.refreshToken) {
-      this.setAuthCookies(res, dto.accessToken, dto.refreshToken);
-    } else {
-      res.cookie('access_token', dto.accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 1000,
-        path: '/',
-      });
+    if (result.access_token && result.refresh_token) {
+      this.setAuthCookies(res, result.access_token, result.refresh_token);
     }
     return result;
   }
@@ -122,10 +112,10 @@ export class AuthController {
   }
 
   @Post('password/update')
-  @UseGuards(SupabaseAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
-  async updatePassword(@Body() dto: UpdatePasswordDto) {
-    return this.authService.updatePassword(dto.newPassword);
+  async updatePassword(@CurrentUser() user: User, @Body() dto: UpdatePasswordDto) {
+    return this.authService.updatePassword(user.id, dto.newPassword);
   }
 
   @Post('email/resend-confirmation')
@@ -135,24 +125,49 @@ export class AuthController {
   }
 
   @Get('sessions')
-  @UseGuards(SupabaseAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async getSessions(@CurrentUser() user: User) {
     return this.authService.getSessions(user.id);
   }
 
   @Post('sessions/revoke-all')
-  @UseGuards(SupabaseAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   async revokeAllSessions(@CurrentUser() user: User) {
     return this.authService.revokeAllSessions(user.id);
   }
 
   @Post('logout')
-  @UseGuards(SupabaseAuthGuard)
-  async logout(@Res({ passthrough: true }) res: Response) {
+  @UseGuards(JwtAuthGuard)
+  async logout(@CurrentUser() user: User, @Body() body: RefreshTokenDto, @Res({ passthrough: true }) res: Response) {
+    // Revoke the specific refresh token if provided
+    if (body?.refresh_token) {
+      try {
+        await this.authService['prisma'].refreshToken.deleteMany({
+          where: { userId: user.id, token: body.refresh_token },
+        });
+      } catch { /* ignore */ }
+    }
     res.clearCookie('access_token', { path: '/' });
     res.clearCookie('refresh_token', { path: '/' });
     return { message: 'Logged out successfully' };
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getProfile(@CurrentUser() user: User) {
+    return this.authService.getProfile(user.id);
+  }
+
+  @Patch('role')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  async updateRole(
+    @CurrentUser() user: User,
+    @Body('userId') targetUserId: string,
+    @Body('role') role: UserRole,
+  ) {
+    return this.authService.updateRole(targetUserId || user.id, role);
   }
 
   private setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
@@ -161,7 +176,7 @@ export class AuthController {
       httpOnly: true,
       secure: isProduction,
       sameSite: 'lax',
-      maxAge: 60 * 60 * 1000, // 1 hour
+      maxAge: 60 * 60 * 1000,       // 1 hour
       path: '/',
     });
     res.cookie('refresh_token', refreshToken, {
@@ -171,18 +186,5 @@ export class AuthController {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       path: '/',
     });
-  }
-
-  @Get('me')
-  @UseGuards(SupabaseAuthGuard)
-  async getProfile(@CurrentUser() user: User) {
-    return this.authService.getProfile(user.id);
-  }
-
-  @Patch('role')
-  @UseGuards(SupabaseAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  async updateRole(@CurrentUser() user: User, @Body('userId') targetUserId: string, @Body('role') role: UserRole) {
-    return this.authService.updateRole(targetUserId || user.id, role);
   }
 }

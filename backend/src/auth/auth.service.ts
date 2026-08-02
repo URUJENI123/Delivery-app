@@ -1,461 +1,386 @@
-import { Injectable, UnauthorizedException, ForbiddenException, ConflictException, Logger } from '@nestjs/common';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { DbService } from '../db/db.service';
+import {
+  Injectable,
+  UnauthorizedException,
+  ForbiddenException,
+  ConflictException,
+  BadRequestException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
+import { PrismaService } from '../db/prisma.service';
 import { UserRole } from '../types';
+import { NotificationsService } from '../notifications/notifications.service';
+
+const BCRYPT_ROUNDS = 12;
+const OTP_EXPIRY_MINUTES = parseInt(process.env.OTP_EXPIRY_MINUTES || '30', 10);
+
+/** In-memory OTP store. Replace with Redis for multi-instance deployments. */
+const otpStore = new Map<string, { hash: string; expiresAt: Date }>();
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  private supabase: SupabaseClient | null = null;
-  private supabaseAdmin: SupabaseClient | null = null;
 
-  constructor(private readonly db: DbService) {
-    const url = process.env.SUPABASE_URL;
-    const anonKey = process.env.SUPABASE_ANON_KEY;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const isPlaceholder = !url || url.includes('placeholder');
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
-    if (!isPlaceholder && anonKey && serviceKey) {
-      this.supabase = createClient(url, anonKey);
-      this.supabaseAdmin = createClient(url, serviceKey, {
-        auth: { autoRefreshToken: false, persistSession: false },
-      });
-    } else {
-      this.logger.warn('Supabase not configured — auth endpoints will return errors (dev mode)');
-    }
+  // ─── Token helpers ─────────────────────────────────────────────────────────
+
+  private signAccessToken(userId: string, role: string): string {
+    return this.jwtService.sign(
+      { sub: userId, role },
+      { secret: process.env.JWT_SECRET, expiresIn: (process.env.JWT_EXPIRES_IN || '1h') as any },
+    );
   }
 
-  private get client(): SupabaseClient {
-    if (!this.supabase) throw new UnauthorizedException('Auth service not configured (dev mode)');
-    return this.supabase;
+  private async createRefreshToken(userId: string): Promise<string> {
+    const token = crypto.randomBytes(40).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
+
+    await this.prisma.refreshToken.create({ data: { userId, token, expiresAt } });
+    return token;
   }
 
-  private get adminClient(): SupabaseClient {
-    if (!this.supabaseAdmin) throw new UnauthorizedException('Auth service not configured (dev mode)');
-    return this.supabaseAdmin;
-  }
+  // ─── Sender signup / signin ─────────────────────────────────────────────────
 
   async senderSignup(email: string, password: string, fullName?: string) {
-    const existing = await this.db.findOne('users', 'email', email);
-    if (existing) {
-      throw new ConflictException('Signup failed. Please try again.');
-    }
+    const existing = await this.prisma.user.findUnique({ where: { email } });
+    if (existing) throw new ConflictException('Email already registered');
 
-    const { data, error } = await this.client.auth.signUp({
-      email,
-      password,
-    });
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-    if (error || !data.user) {
-      this.logger.error(`Sender signup failed: ${error?.message}`);
-      throw new UnauthorizedException('Signup failed. Please try again.');
-    }
-
-    const supabaseUser = data.user;
-
-    let dbUser = await this.db.findOne('users', 'supabaseId', supabaseUser.id);
-
-    if (!dbUser) {
-      dbUser = await this.db.create('users', {
-        supabaseId: supabaseUser.id,
+    const user = await this.prisma.user.create({
+      data: {
         email,
+        passwordHash,
         fullName: fullName || null,
         role: UserRole.SENDER,
         emailVerified: false,
-      });
-    }
+      },
+    });
 
     return {
-      message: 'Account created! Please check your email inbox to confirm your account before signing in.',
-      user: dbUser,
+      message: 'Account created successfully. You can now sign in.',
+      user: this.sanitizeUser(user),
     };
   }
 
   async senderSignin(email: string, password: string) {
-    const { data, error } = await this.client.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error || !data.session) {
-      const isUnconfirmed = error?.message?.toLowerCase().includes('email not confirmed');
-      this.logger.error(`Sender signin failed: ${error?.message}`);
-      throw new UnauthorizedException(
-        isUnconfirmed
-          ? 'Email not confirmed. Please check your inbox (and spam folder) for the confirmation link.'
-          : 'Invalid email or password'
-      );
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user || !user.passwordHash) {
+      throw new UnauthorizedException('Invalid email or password');
     }
 
-    const supabaseUser = data.user;
-    let dbUser = await this.db.findOne('users', 'supabaseId', supabaseUser!.id);
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) throw new UnauthorizedException('Invalid email or password');
 
-    if (!dbUser) {
-      dbUser = await this.db.create('users', {
-        supabaseId: supabaseUser!.id,
-        email: supabaseUser!.email || email,
-        role: UserRole.SENDER,
-        emailVerified: supabaseUser!.email_confirmed_at ? true : false,
-      });
-    }
+    if (!user.isActive) throw new UnauthorizedException('Account is deactivated');
+
+    const [accessToken, refreshToken] = await Promise.all([
+      this.signAccessToken(user.id, user.role),
+      this.createRefreshToken(user.id),
+    ]);
 
     return {
-      access_token: data.session.access_token,
-      refresh_token: data.session.refresh_token,
-      user: dbUser,
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user: this.sanitizeUser(user),
     };
   }
+
+  // ─── Admin signin ───────────────────────────────────────────────────────────
 
   async adminSignin(email: string, password: string) {
-    const { data, error } = await this.client.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user || !user.passwordHash) throw new UnauthorizedException('Invalid credentials');
 
-    if (error || !data.session) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) throw new UnauthorizedException('Invalid credentials');
 
-    const supabaseUser = data.user;
-    let dbUser = await this.db.findOne('users', 'supabaseId', supabaseUser!.id);
+    if (user.role !== UserRole.ADMIN) throw new ForbiddenException('Access denied. Admin only.');
 
-    if (!dbUser) {
-      throw new UnauthorizedException('Admin account not found');
-    }
-
-    if (dbUser.role !== UserRole.ADMIN) {
-      throw new ForbiddenException('Access denied. Admin only.');
-    }
+    const [accessToken, refreshToken] = await Promise.all([
+      this.signAccessToken(user.id, user.role),
+      this.createRefreshToken(user.id),
+    ]);
 
     return {
-      access_token: data.session.access_token,
-      refresh_token: data.session.refresh_token,
-      user: dbUser,
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user: this.sanitizeUser(user),
     };
   }
 
+  // ─── Courier phone OTP ──────────────────────────────────────────────────────
+
   async checkCourierPhone(phone: string) {
-    const user = await this.db.findOne('users', 'phone', phone);
+    const user = await this.prisma.user.findUnique({ where: { phone } });
     return { exists: !!user, message: user ? undefined : 'No account found with this phone number' };
   }
 
   async courierRequestOtp(phone: string) {
-    const user = await this.db.findOne('users', 'phone', phone);
+    const user = await this.prisma.user.findUnique({ where: { phone } });
+    if (!user) return { exists: false, message: 'No account found with this phone number' };
 
-    if (!user) {
-      return { exists: false, message: 'No account found with this phone number' };
-    }
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const otpHash = await bcrypt.hash(otp, 10);
+    const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
+    otpStore.set(phone, { hash: otpHash, expiresAt });
 
-    const { error } = await this.client.auth.signInWithOtp({
-      phone,
-    });
-
-    if (error) {
-      this.logger.error(`Courier OTP request failed: ${error.message}`);
-      throw new UnauthorizedException('Failed to send OTP');
+    try {
+      await this.notifications.sendOtp(phone, otp);
+    } catch (err) {
+      this.logger.error(`Failed to send OTP to ${phone}: ${(err as Error).message}`);
+      throw new BadRequestException('Failed to send OTP');
     }
 
     return { exists: true, message: 'OTP sent successfully' };
   }
 
   async courierVerifyOtp(phone: string, token: string) {
-    const { data, error } = await this.client.auth.verifyOtp({
-      phone,
-      token,
-      type: 'sms',
-    });
-
-    if (error || !data.session) {
-      this.logger.error(`Courier OTP verification failed: ${error?.message}`);
-      throw new UnauthorizedException('Invalid or expired OTP');
+    const entry = otpStore.get(phone);
+    if (!entry || entry.expiresAt < new Date()) {
+      otpStore.delete(phone);
+      throw new UnauthorizedException('OTP expired or not found. Request a new one.');
     }
 
-    const supabaseUser = data.user;
-    if (!supabaseUser) {
-      throw new UnauthorizedException('User not found');
-    }
+    const valid = await bcrypt.compare(token, entry.hash);
+    if (!valid) throw new UnauthorizedException('Invalid OTP');
 
-    let dbUser = await this.db.findOne('users', 'supabaseId', supabaseUser.id);
+    otpStore.delete(phone);
 
-    if (!dbUser) {
-      dbUser = await this.db.create('users', {
-        supabaseId: supabaseUser.id,
-        phone: supabaseUser.phone || phone,
-        phoneVerified: true,
-        role: UserRole.COURIER,
+    let user = await this.prisma.user.findUnique({ where: { phone } });
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: { phone, phoneVerified: true, role: UserRole.COURIER },
       });
-    }
-
-    const hasOnboardingSession = await this.db.findOne('onboarding_sessions', 'userId', dbUser.id);
-
-    return {
-      access_token: data.session.access_token,
-      refresh_token: data.session.refresh_token,
-      user: dbUser,
-      needsOnboarding: !hasOnboardingSession,
-    };
-  }
-
-  async googleCallback(accessToken: string) {
-    this.logger.log('googleCallback called');
-
-    if (!accessToken || accessToken.length < 10) {
-      this.logger.error('googleCallback: accessToken too short or empty');
-      throw new UnauthorizedException('Invalid access token');
-    }
-
-    const { data: { user: supabaseUser }, error } = await this.client.auth.getUser(accessToken);
-
-    if (error || !supabaseUser) {
-      this.logger.error(`Google callback getUser failed: ${error?.message}`);
-      throw new UnauthorizedException('Invalid access token');
-    }
-
-    this.logger.log(`googleCallback: Supabase user resolved: ${supabaseUser.id} email: ${supabaseUser.email}`);
-
-    let dbUser = await this.db.findOne('users', 'supabaseId', supabaseUser.id);
-
-    if (!dbUser) {
-      this.logger.log('googleCallback: Creating new local user');
-      const email = supabaseUser.email || '';
-      dbUser = await this.db.create('users', {
-        supabaseId: supabaseUser.id,
-        email,
-        fullName: supabaseUser.user_metadata?.full_name || null,
-        role: UserRole.SENDER,
-        emailVerified: !!supabaseUser.email_confirmed_at,
-        profilePhotoUrl: supabaseUser.user_metadata?.avatar_url || null,
-      });
-      this.logger.log(`googleCallback: Created user id=${dbUser.id}`);
     } else {
-      // Update profile from Google in case avatar/name changed
-      const googleName = supabaseUser.user_metadata?.full_name || null;
-      const googleAvatar = supabaseUser.user_metadata?.avatar_url || null;
-      const googleEmailVerified = !!supabaseUser.email_confirmed_at;
-      if (
-        dbUser.fullName !== googleName ||
-        dbUser.profilePhotoUrl !== googleAvatar ||
-        dbUser.emailVerified !== googleEmailVerified
-      ) {
-        await this.db.update('users', 'id', dbUser.id, {
-          fullName: googleName,
-          profilePhotoUrl: googleAvatar,
-          emailVerified: googleEmailVerified,
-        });
-        this.logger.log(`googleCallback: Updated user id=${dbUser.id}`);
-      }
-      this.logger.log(`googleCallback: Found existing user id=${dbUser.id}`);
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { phoneVerified: true },
+      });
     }
 
-    const profile = await this.db.findOneWithJoin('users', 'id', dbUser.id, [
-      'courier_profile:couriers(*)',
-      'sender_profile:sender_profiles(*)',
-      'onboarding_session:onboarding_sessions(*)',
+    const hasOnboarding = await this.prisma.onboardingSession.findUnique({ where: { userId: user.id } });
+
+    const [accessToken, refreshToken] = await Promise.all([
+      this.signAccessToken(user.id, user.role),
+      this.createRefreshToken(user.id),
     ]);
 
-    this.logger.log('googleCallback: Returning profile');
-    return profile;
-  }
-
-  async googleAuth(idToken: string) {
-    const { data, error } = await this.client.auth.signInWithIdToken({
-      provider: 'google',
-      token: idToken,
-    });
-
-    if (error || !data.user) {
-      this.logger.error(`Google auth failed: ${error?.message}`);
-      throw new UnauthorizedException('Google authentication failed');
-    }
-
-    const supabaseUser = data.user;
-    let dbUser = await this.db.findOne('users', 'supabaseId', supabaseUser.id);
-
-    if (!dbUser) {
-      const email = supabaseUser.email || '';
-      dbUser = await this.db.create('users', {
-        supabaseId: supabaseUser.id,
-        email,
-        fullName: supabaseUser.user_metadata?.full_name || null,
-        role: UserRole.SENDER,
-        emailVerified: true,
-        profilePhotoUrl: supabaseUser.user_metadata?.avatar_url || null,
-      });
-    } else {
-      const googleName = supabaseUser.user_metadata?.full_name || null;
-      const googleAvatar = supabaseUser.user_metadata?.avatar_url || null;
-      if (dbUser.fullName !== googleName || dbUser.profilePhotoUrl !== googleAvatar) {
-        await this.db.update('users', 'id', dbUser.id, {
-          fullName: googleName,
-          profilePhotoUrl: googleAvatar,
-        });
-      }
-    }
-
     return {
-      access_token: data.session?.access_token || null,
-      refresh_token: data.session?.refresh_token || null,
-      user: dbUser,
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user: this.sanitizeUser(user),
+      needsOnboarding: !hasOnboarding,
     };
   }
 
   async requestOtp(phone: string) {
-    const { error } = await this.client.auth.signInWithOtp({
-      phone,
-    });
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const otpHash = await bcrypt.hash(otp, 10);
+    const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
+    otpStore.set(phone, { hash: otpHash, expiresAt });
 
-    if (error) {
-      this.logger.error(`OTP request failed: ${error.message}`);
-      throw new UnauthorizedException('Failed to send OTP');
+    try {
+      await this.notifications.sendOtp(phone, otp);
+    } catch {
+      throw new BadRequestException('Failed to send OTP');
     }
 
     return { message: 'OTP sent successfully' };
   }
 
   async verifyOtp(phone: string, token: string) {
-    const { data, error } = await this.client.auth.verifyOtp({
-      phone,
-      token,
-      type: 'sms',
-    });
-
-    if (error || !data.session) {
-      this.logger.error(`OTP verification failed: ${error?.message}`);
-      throw new UnauthorizedException('Invalid or expired OTP');
+    const entry = otpStore.get(phone);
+    if (!entry || entry.expiresAt < new Date()) {
+      otpStore.delete(phone);
+      throw new UnauthorizedException('OTP expired or not found');
     }
 
-    const supabaseUser = data.user;
-    if (!supabaseUser) {
-      throw new UnauthorizedException('User not found');
-    }
+    const valid = await bcrypt.compare(token, entry.hash);
+    if (!valid) throw new UnauthorizedException('Invalid OTP');
+    otpStore.delete(phone);
 
-    let dbUser = await this.db.findOne('users', 'supabaseId', supabaseUser.id);
-
-    if (!dbUser) {
-      dbUser = await this.db.create('users', {
-        supabaseId: supabaseUser.id,
-        phone: supabaseUser.phone || phone,
-        role: UserRole.SENDER,
+    let user = await this.prisma.user.findUnique({ where: { phone } });
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: { phone, phoneVerified: true, role: UserRole.SENDER },
       });
     }
 
+    const [accessToken, refreshToken] = await Promise.all([
+      this.signAccessToken(user.id, user.role),
+      this.createRefreshToken(user.id),
+    ]);
+
     return {
-      access_token: data.session.access_token,
-      refresh_token: data.session.refresh_token,
-      user: dbUser,
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user: this.sanitizeUser(user),
     };
   }
+
+  // ─── Google OAuth (exchange id_token for session) ──────────────────────────
+  // The frontend uses Supabase JS SDK's Google OAuth flow which issues a Supabase
+  // access token. We replace that: the frontend should use Google Identity Services
+  // to get an id_token and POST it here. We verify it via Google's tokeninfo endpoint.
+
+  async googleAuth(idToken: string) {
+    // Verify id_token with Google
+    const googleUser = await this.verifyGoogleIdToken(idToken);
+
+    let user = await this.prisma.user.findUnique({ where: { email: googleUser.email } });
+
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          email: googleUser.email,
+          fullName: googleUser.name || null,
+          profilePhotoUrl: googleUser.picture || null,
+          role: UserRole.SENDER,
+          emailVerified: true,
+        },
+      });
+    } else {
+      const updates: any = {};
+      if (googleUser.name && user.fullName !== googleUser.name) updates.fullName = googleUser.name;
+      if (googleUser.picture && user.profilePhotoUrl !== googleUser.picture) updates.profilePhotoUrl = googleUser.picture;
+      if (!user.emailVerified) updates.emailVerified = true;
+      if (Object.keys(updates).length) {
+        user = await this.prisma.user.update({ where: { id: user.id }, data: updates });
+      }
+    }
+
+    const [accessToken, refreshToken] = await Promise.all([
+      this.signAccessToken(user.id, user.role),
+      this.createRefreshToken(user.id),
+    ]);
+
+    return {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user: this.sanitizeUser(user),
+    };
+  }
+
+  /** Verify Google ID token via tokeninfo endpoint */
+  private async verifyGoogleIdToken(idToken: string): Promise<{ email: string; name?: string; picture?: string }> {
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+    if (!response.ok) throw new UnauthorizedException('Google authentication failed');
+    const data = await response.json() as any;
+    if (!data.email) throw new UnauthorizedException('Invalid Google token');
+    return { email: data.email, name: data.name, picture: data.picture };
+  }
+
+  /** Legacy googleCallback — now just a thin wrapper */
+  async googleCallback(accessToken: string) {
+    // accessToken here is the Supabase-issued token from the frontend OAuth callback.
+    // Since we migrated away from Supabase, this endpoint now expects a Google ID token.
+    return this.googleAuth(accessToken);
+  }
+
+  // ─── Refresh token ──────────────────────────────────────────────────────────
 
   async refreshToken(refreshToken: string) {
-    const { data, error } = await this.client.auth.refreshSession({
-      refresh_token: refreshToken,
-    });
-
-    if (error || !data.session) {
-      throw new UnauthorizedException('Invalid refresh token');
+    const record = await this.prisma.refreshToken.findUnique({ where: { token: refreshToken } });
+    if (!record || record.expiresAt < new Date()) {
+      if (record) await this.prisma.refreshToken.delete({ where: { id: record.id } });
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
-    return {
-      access_token: data.session.access_token,
-      refresh_token: data.session.refresh_token,
-    };
-  }
+    const user = await this.prisma.user.findUnique({ where: { id: record.userId } });
+    if (!user || !user.isActive) throw new UnauthorizedException('User not found or inactive');
 
-  async getProfile(userId: string) {
-    return this.db.findOneWithJoin('users', 'id', userId, [
-      'courier_profile:couriers(*)',
-      'sender_profile:sender_profiles(*)',
-      'onboarding_session:onboarding_sessions(*)',
+    // Rotate: delete old, create new
+    await this.prisma.refreshToken.delete({ where: { id: record.id } });
+    const [newAccessToken, newRefreshToken] = await Promise.all([
+      this.signAccessToken(user.id, user.role),
+      this.createRefreshToken(user.id),
     ]);
+
+    return { access_token: newAccessToken, refresh_token: newRefreshToken };
   }
 
-  async updateRole(userId: string, role: UserRole) {
-    const user = await this.db.findOne('users', 'id', userId);
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    return this.db.update('users', 'id', userId, { role });
-  }
+  // ─── Password reset ─────────────────────────────────────────────────────────
 
   async requestPasswordReset(email: string) {
-    const { error } = await this.client.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/sender/reset-password`,
-    });
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    // Intentionally vague — don't leak whether email exists
+    if (!user) return { message: 'If the email exists, a reset link has been sent' };
 
-    if (error) {
-      this.logger.error(`Password reset request failed: ${error.message}`);
-      throw new UnauthorizedException('Failed to send reset email');
-    }
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetHash = await bcrypt.hash(resetToken, 10);
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    otpStore.set(`reset:${email}`, { hash: resetHash, expiresAt });
 
-    return { message: 'If the email exists, a password reset link has been sent' };
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/sender/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+    this.logger.log(`Password reset URL for ${email}: ${resetUrl}`);
+    // TODO: send via email provider (Resend / SendGrid)
+
+    return { message: 'If the email exists, a reset link has been sent' };
   }
 
-  async updatePassword(newPassword: string) {
-    const { error } = await this.client.auth.updateUser({
-      password: newPassword,
-    });
-
-    if (error) {
-      this.logger.error(`Password update failed: ${error.message}`);
-      throw new UnauthorizedException('Failed to update password');
-    }
-
+  async updatePassword(userId: string, newPassword: string) {
+    const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+    // Revoke all refresh tokens for security
+    await this.prisma.refreshToken.deleteMany({ where: { userId } });
     return { message: 'Password updated successfully' };
   }
 
   async resendEmailConfirmation(email: string) {
-    const { error } = await this.client.auth.resend({
-      type: 'signup',
-      email,
-    });
-
-    if (error) {
-      this.logger.error(`Email confirmation resend failed: ${error.message}`);
-      throw new UnauthorizedException('Failed to resend confirmation email');
-    }
-
+    // Stub — implement with your email provider
+    this.logger.log(`Resend email confirmation for: ${email}`);
     return { message: 'Confirmation email sent' };
   }
 
+  // ─── Profile / sessions ─────────────────────────────────────────────────────
+
+  async getProfile(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        courierProfile: true,
+        senderProfile: true,
+        onboardingSession: true,
+      },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    return this.sanitizeUser(user);
+  }
+
+  async updateRole(userId: string, role: UserRole) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+    return this.prisma.user.update({ where: { id: userId }, data: { role } });
+  }
+
   async getSessions(userId: string) {
-    const user = await this.db.findOne('users', 'id', userId);
-    if (!user || !user.supabaseId) return [];
-
-    const { data, error } = await this.adminClient.auth.admin.listUsers();
-
-    if (error) {
-      this.logger.error(`Failed to list users: ${error.message}`);
-      return [];
-    }
-
-    const supabaseUser = data.users.find(u => u.id === user.supabaseId);
-    if (!supabaseUser) return [];
-
-    return {
-      userId: supabaseUser.id,
-      email: supabaseUser.email,
-      phone: supabaseUser.phone,
-      createdAt: supabaseUser.created_at,
-      lastSignInAt: supabaseUser.last_sign_in_at,
-      emailConfirmedAt: supabaseUser.email_confirmed_at,
-      phoneConfirmedAt: supabaseUser.phone_confirmed_at,
-    };
+    const tokens = await this.prisma.refreshToken.findMany({
+      where: { userId, expiresAt: { gt: new Date() } },
+      select: { id: true, createdAt: true, expiresAt: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    return tokens;
   }
 
   async revokeAllSessions(userId: string) {
-    const user = await this.db.findOne('users', 'id', userId);
-    if (!user || !user.supabaseId) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    const { error } = await this.adminClient.auth.admin.signOut(user.supabaseId);
-
-    if (error) {
-      this.logger.error(`Failed to revoke sessions: ${error.message}`);
-      throw new UnauthorizedException('Failed to revoke sessions');
-    }
-
+    await this.prisma.refreshToken.deleteMany({ where: { userId } });
     return { message: 'All sessions revoked' };
+  }
+
+  // ─── Helpers ────────────────────────────────────────────────────────────────
+
+  sanitizeUser(user: any) {
+    const { passwordHash, ...safe } = user;
+    return safe;
   }
 }

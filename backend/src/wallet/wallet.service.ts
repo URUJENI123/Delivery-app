@@ -1,132 +1,141 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { DbService, mapRow } from '../db/db.service';
+import { PrismaService } from '../db/prisma.service';
 
 const SERVICE_FEE_RWF = 100;
 
 @Injectable()
 export class WalletService {
-  constructor(private readonly db: DbService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async getWallet(userId: string) {
-    let wallet = await this.db.findOne('wallets', 'userId', userId);
+    let wallet = await this.prisma.wallet.findUnique({
+      where: { userId },
+      include: {
+        transactions: { orderBy: { createdAt: 'desc' }, take: 50 },
+      },
+    });
+
     if (!wallet) {
-      wallet = await this.db.create('wallets', { userId, balance: 0 });
+      wallet = await this.prisma.wallet.create({
+        data: { userId, balance: 0 },
+        include: { transactions: true },
+      });
     }
-    const sb = this.db.getClient();
-    const { data: transactions } = await sb
-      .from('wallet_transactions')
-      .select('*')
-      .eq('wallet_id', wallet.id)
-      .order('created_at', { ascending: false })
-      .limit(50);
+
     return {
-      balance: wallet.balance || 0,
-      transactions: transactions ? mapRow(transactions) : [],
+      balance: wallet.balance,
+      transactions: wallet.transactions,
     };
   }
 
   async topUp(userId: string, amount: number, method: string) {
-    let wallet = await this.db.findOne('wallets', 'userId', userId);
-    if (!wallet) {
-      wallet = await this.db.create('wallets', { userId, balance: 0 });
-    }
-    await this.db.update('wallets', 'id', wallet.id, {
-      balance: (wallet.balance || 0) + amount,
-    });
-    const sb = this.db.getClient();
-    const { data: transaction } = await sb
-      .from('wallet_transactions')
-      .insert({
-        wallet_id: wallet.id,
-        type: 'credit',
-        description: `Top up via ${method}`,
-        amount,
-      })
-      .select()
-      .single();
-    return transaction || { success: true };
+    const wallet = await this.upsertWallet(userId);
+
+    const [, transaction] = await this.prisma.$transaction([
+      this.prisma.wallet.update({
+        where: { id: wallet.id },
+        data: { balance: { increment: amount } },
+      }),
+      this.prisma.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          type: 'credit',
+          description: `Top up via ${method}`,
+          amount,
+        },
+      }),
+    ]);
+
+    return transaction;
   }
 
   async withdraw(userId: string, amount: number, method: string) {
-    const wallet = await this.db.findOne('wallets', 'userId', userId);
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
-    if ((wallet.balance || 0) < amount) {
-      throw new BadRequestException('Insufficient balance');
-    }
-    await this.db.update('wallets', 'id', wallet.id, {
-      balance: (wallet.balance || 0) - amount,
-    });
-    const sb = this.db.getClient();
-    const { data: transaction } = await sb
-      .from('wallet_transactions')
-      .insert({
-        wallet_id: wallet.id,
-        type: 'withdrawal',
-        description: `Withdrawal via ${method}`,
-        amount,
-      })
-      .select()
-      .single();
-    return transaction || { success: true };
+    if (wallet.balance < amount) throw new BadRequestException('Insufficient balance');
+
+    const [, transaction] = await this.prisma.$transaction([
+      this.prisma.wallet.update({
+        where: { id: wallet.id },
+        data: { balance: { decrement: amount } },
+      }),
+      this.prisma.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          type: 'withdrawal',
+          description: `Withdrawal via ${method}`,
+          amount,
+        },
+      }),
+    ]);
+
+    return transaction;
   }
 
   async creditCourier(courierUserId: string, amount: number, deliveryId: string) {
     const fee = SERVICE_FEE_RWF;
     const netAmount = amount - fee;
-    let wallet = await this.db.findOne('wallets', 'userId', courierUserId);
-    if (!wallet) {
-      wallet = await this.db.create('wallets', { userId: courierUserId, balance: 0 });
-    }
+    const wallet = await this.upsertWallet(courierUserId);
 
-    await this.db.update('wallets', 'id', wallet.id, {
-      balance: (wallet.balance || 0) + netAmount,
-    });
-
-    const sb = this.db.getClient();
-    await sb.from('wallet_transactions').insert([
-      {
-        wallet_id: wallet.id,
-        type: 'credit',
-        description: `Payment for delivery #${deliveryId.slice(0, 8)}`,
-        amount: netAmount,
-        reference_type: 'delivery',
-        reference_id: deliveryId,
-      },
-      {
-        wallet_id: wallet.id,
-        type: 'fee',
-        description: `Service fee - Delivery #${deliveryId.slice(0, 8)}`,
-        amount: fee,
-        reference_type: 'delivery',
-        reference_id: deliveryId,
-      },
+    await this.prisma.$transaction([
+      this.prisma.wallet.update({
+        where: { id: wallet.id },
+        data: { balance: { increment: netAmount } },
+      }),
+      this.prisma.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          type: 'credit',
+          description: `Payment for delivery #${deliveryId.slice(0, 8)}`,
+          amount: netAmount,
+          referenceType: 'delivery',
+          referenceId: deliveryId,
+        },
+      }),
+      this.prisma.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          type: 'fee',
+          description: `Service fee - Delivery #${deliveryId.slice(0, 8)}`,
+          amount: fee,
+          referenceType: 'delivery',
+          referenceId: deliveryId,
+        },
+      }),
     ]);
 
     return { netAmount, fee };
   }
 
   async debitSender(senderUserId: string, amount: number, deliveryId: string) {
-    let wallet = await this.db.findOne('wallets', 'userId', senderUserId);
-    if (!wallet) {
-      wallet = await this.db.create('wallets', { userId: senderUserId, balance: 0 });
-    }
+    const wallet = await this.upsertWallet(senderUserId);
 
-    // Don't require balance - this is a placeholder escrow hold
-    // In production, the payment gateway would have already charged the sender
-    await this.db.update('wallets', 'id', wallet.id, {
-      balance: (wallet.balance || 0) - amount,
-    });
-
-    const sb = this.db.getClient();
-    await sb.from('wallet_transactions').insert({
-      wallet_id: wallet.id,
-      type: 'debit',
-      description: `Payment held in escrow for delivery #${deliveryId.slice(0, 8)}`,
-      amount,
-      reference_type: 'delivery',
-      reference_id: deliveryId,
-    });
+    // Placeholder escrow — no balance check (gateway would handle real charge)
+    await this.prisma.$transaction([
+      this.prisma.wallet.update({
+        where: { id: wallet.id },
+        data: { balance: { decrement: amount } },
+      }),
+      this.prisma.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          type: 'debit',
+          description: `Payment held in escrow for delivery #${deliveryId.slice(0, 8)}`,
+          amount,
+          referenceType: 'delivery',
+          referenceId: deliveryId,
+        },
+      }),
+    ]);
 
     return { success: true, amount };
+  }
+
+  private async upsertWallet(userId: string) {
+    return this.prisma.wallet.upsert({
+      where: { userId },
+      create: { userId, balance: 0 },
+      update: {},
+    });
   }
 }

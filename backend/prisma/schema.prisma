@@ -1,0 +1,444 @@
+// Prisma schema for Delivery App
+// Database: Neon (PostgreSQL)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  SENDER
+  COURIER
+  ADMIN
+}
+
+enum CourierVerificationTier {
+  BASIC
+  IDENTITY
+  VEHICLE
+  TRUSTED
+}
+
+enum DeliveryStatus {
+  DRAFT
+  BROADCAST
+  COURIER_ASSIGNED
+  COURIER_CONFIRMED
+  PICKUP_EN_ROUTE
+  ARRIVED_PICKUP
+  PICKED_UP
+  IN_TRANSIT
+  ARRIVED_DROPOFF
+  DELIVERED
+  CANCELLED
+  DISPUTED
+  FAILED
+}
+
+enum PackageCategory {
+  DOCUMENT
+  FOOD
+  ELECTRONICS
+  CLOTHING
+  PHARMACY
+  FRAGILE
+  OTHER
+}
+
+enum PackageSize {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+enum PaymentMethod {
+  CASH
+  MOBILE_MONEY
+  PLATFORM_BALANCE
+}
+
+enum PaymentStatus {
+  PENDING
+  HELD
+  RELEASED
+  REFUNDED
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED_SENDER
+  RESOLVED_COURIER
+  CLOSED
+}
+
+enum EventType {
+  DELIVERY_CREATED
+  BROADCAST_SENT
+  COURIER_INTERESTED
+  COURIER_SELECTED
+  COURIER_CONFIRMED
+  COURIER_DEPARTED_PICKUP
+  COURIER_ARRIVED_PICKUP
+  PICKUP_OTP_SENT
+  PICKUP_OTP_CONFIRMED
+  PACKAGE_PICKED_UP
+  LOCATION_UPDATE
+  COURIER_ARRIVED_DROPOFF
+  DROPOFF_OTP_SENT
+  DROPOFF_OTP_CONFIRMED
+  DELIVERY_COMPLETED
+  DELIVERY_CANCELLED
+  DISPUTE_RAISED
+  DISPUTE_RESOLVED
+  CHAT_MESSAGE_SENT
+}
+
+enum WalletTransactionType {
+  credit
+  debit
+  fee
+  withdrawal
+  refund
+}
+
+model User {
+  id              String   @id @default(uuid())
+  email           String?  @unique
+  phone           String?  @unique
+  passwordHash    String?
+  fullName        String?
+  role            UserRole @default(SENDER)
+  profilePhotoUrl String?
+  emailVerified   Boolean  @default(false)
+  phoneVerified   Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  courierProfile    Courier?
+  senderProfile     SenderProfile?
+  onboardingSession OnboardingSession?
+  sentDeliveries    Delivery[]            @relation("SenderDeliveries")
+  chatMessages      ChatMessage[]
+  givenRatings      Rating[]              @relation("GivenRatings")
+  receivedRatings   Rating[]              @relation("ReceivedRatings")
+  deliveryEvents    DeliveryEvent[]
+  wallet            Wallet?
+  raisedDisputes    Dispute[]
+  refreshTokens     RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model SenderProfile {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  businessName          String?
+  businessType          String?
+  defaultPickupAddress  String?
+  preferredContactMethod String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sender_profiles")
+}
+
+model OnboardingSession {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  currentStep           Int      @default(0)
+  totalSteps            Int      @default(3)
+  isComplete            Boolean  @default(false)
+  isSubmitted           Boolean  @default(false)
+  fullName              String?
+  email                 String?
+  phone                 String?
+  nationalIdNumber      String?
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  motorcyclePlate       String?
+  associationCode       String?
+  jacketSerialNumber    String?
+  operatingZone         String?
+  momoNumber            String?
+  momoProvider          String?
+  selfieUrl             String?
+  idPhotoUrl            String?
+  vehiclePhotoFrontUrl  String?
+  vehiclePhotoRearUrl   String?
+  licensePhotoUrl       String?
+  jacketPhotoUrl        String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("onboarding_sessions")
+}
+
+model Courier {
+  id                    String                  @id @default(uuid())
+  userId                String                  @unique
+  nationalIdNumber      String?
+  motorcyclePlate       String?
+  associationCode       String?
+  jacketSerialNumber    String?
+  operatingZone         String?
+  selfieUrl             String?
+  idPhotoUrl            String?
+  vehiclePhotoFrontUrl  String?
+  vehiclePhotoRearUrl   String?
+  licensePhotoUrl       String?
+  jacketPhotoUrl        String?
+  verificationTier      CourierVerificationTier @default(BASIC)
+  isApprovedByAdmin     Boolean                 @default(false)
+  adminNotes            String?
+  isOnline              Boolean                 @default(false)
+  currentLat            Float?
+  currentLng            Float?
+  lastLocationAt        DateTime?
+  totalDeliveries       Int                     @default(0)
+  completionRate        Float                   @default(0)
+  avgRating             Float                   @default(0)
+  reliabilityScore      Float                   @default(0)
+  totalEarnings         Float                   @default(0)
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  momoNumber            String?
+  momoProvider          String?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries      Delivery[]         @relation("CourierDeliveries")
+  interests       CourierInterest[]
+  locations       CourierLocation[]
+
+  @@map("couriers")
+}
+
+model CourierLocation {
+  id         String   @id @default(uuid())
+  courierId  String
+  deliveryId String?
+  lat        Float
+  lng        Float
+  accuracy   Float?
+  heading    Float?
+  speed      Float?
+  recordedAt DateTime @default(now())
+
+  courier Courier @relation(fields: [courierId], references: [id], onDelete: Cascade)
+
+  @@map("courier_locations")
+}
+
+model Delivery {
+  id                     String          @id @default(uuid())
+  trackingCode           String          @unique @default(cuid())
+  senderId               String
+  courierId              String?
+  pickupAddress          String
+  pickupLat              Float
+  pickupLng              Float
+  pickupNotes            String?
+  pickupEmail            String?
+  dropoffAddress         String
+  dropoffLat             Float
+  dropoffLng             Float
+  dropoffNotes           String?
+  dropoffEmail           String?
+  distanceKm             Float?
+  itemDescription        String
+  category               PackageCategory @default(OTHER)
+  size                   PackageSize     @default(MEDIUM)
+  estimatedValueRwf      Float?
+  isFragile              Boolean         @default(false)
+  requiresRecipientOtp   Boolean         @default(true)
+  pickupContactName      String
+  pickupContactPhone     String
+  recipientName          String
+  recipientPhone         String
+  scheduledPickupAt      DateTime?
+  preferAsap             Boolean         @default(true)
+  quotedPriceRwf         Float?
+  finalPriceRwf          Float?
+  agreedPriceRwf         Float?
+  agreedDeliveryTime     Int?
+  paymentMethod          PaymentMethod   @default(CASH)
+  paymentStatus          PaymentStatus   @default(PENDING)
+  paymentHeldAt          DateTime?
+  paymentReleasedAt      DateTime?
+  pickupOtpHash          String?
+  dropoffOtpHash         String?
+  otpVerifiedAt          DateTime?
+  recipientTrackingToken String?         @unique
+  status                 DeliveryStatus  @default(DRAFT)
+  broadcastExpiresAt     DateTime?
+  assignmentExpiresAt    DateTime?
+  deliveryStartedAt      DateTime?
+  courierArrivedAt       DateTime?
+  dropoffOtpSentAt       DateTime?
+  pickupPhotoUrl         String?
+  dropoffPhotoUrl        String?
+  recipientSignatureUrl  String?
+  pickedUpAt             DateTime?
+  deliveredAt            DateTime?
+  cancelledAt            DateTime?
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+
+  sender       User              @relation("SenderDeliveries", fields: [senderId], references: [id])
+  courier      Courier?          @relation("CourierDeliveries", fields: [courierId], references: [id])
+  events       DeliveryEvent[]
+  chatMessages ChatMessage[]
+  interests    CourierInterest[]
+  dispute      Dispute?
+  rating       Rating?
+
+  @@map("deliveries")
+}
+
+model DeliveryEvent {
+  id         String    @id @default(uuid())
+  deliveryId String
+  userId     String?
+  eventType  EventType
+  metadata   Json?
+  lat        Float?
+  lng        Float?
+  occurredAt DateTime  @default(now())
+
+  delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("delivery_events")
+}
+
+model CourierInterest {
+  id               String   @id @default(uuid())
+  deliveryId       String
+  courierId        String
+  proposedPriceRwf Float?
+  etaMinutes       Int?
+  expressedAt      DateTime @default(now())
+  isSelected       Boolean  @default(false)
+
+  delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  courier  Courier  @relation(fields: [courierId], references: [id], onDelete: Cascade)
+
+  @@unique([deliveryId, courierId])
+  @@map("courier_interests")
+}
+
+model ChatMessage {
+  id         String   @id @default(uuid())
+  deliveryId String
+  senderId   String
+  body       String
+  photoUrl   String?
+  isTemplate Boolean  @default(false)
+  readAt     DateTime?
+  sentAt     DateTime @default(now())
+
+  delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  sender   User     @relation(fields: [senderId], references: [id])
+
+  @@map("chat_messages")
+}
+
+model Rating {
+  id         String   @id @default(uuid())
+  deliveryId String   @unique
+  giverId    String
+  receiverId String
+  stars      Int
+  comment    String?
+  createdAt  DateTime @default(now())
+
+  delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  giver    User     @relation("GivenRatings", fields: [giverId], references: [id])
+  receiver User     @relation("ReceivedRatings", fields: [receiverId], references: [id])
+
+  @@map("ratings")
+}
+
+model Dispute {
+  id           String        @id @default(uuid())
+  deliveryId   String        @unique
+  raisedById   String
+  reason       String
+  description  String?
+  evidenceUrls Json          @default("[]")
+  status       DisputeStatus @default(OPEN)
+  resolution   String?
+  resolvedAt   DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  delivery  Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  raisedBy  User     @relation(fields: [raisedById], references: [id])
+
+  @@map("disputes")
+}
+
+model Wallet {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  balance   Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id            String               @id @default(uuid())
+  walletId      String
+  type          WalletTransactionType
+  description   String
+  amount        Float
+  referenceType String?
+  referenceId   String?
+  createdAt     DateTime             @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@map("wallet_transactions")
+}
+
+model WithdrawalRequest {
+  id          String   @id @default(uuid())
+  userId      String
+  amount      Float
+  momoNumber  String
+  momoProvider String
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("withdrawal_requests")
+}
