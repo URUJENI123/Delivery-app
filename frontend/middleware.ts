@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// GöÇGöÇ DEV MODE GöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇGöÇ
-// When NEXT_PUBLIC_DEV_MOCK=true all auth checks are skipped.
+// DEV MODE: When NEXT_PUBLIC_DEV_MOCK=true all auth checks are skipped.
 // The frontend mock (lib/api.ts) handles data; no backend needed.
 const DEV_MOCK = process.env.NEXT_PUBLIC_DEV_MOCK === 'true';
 
@@ -59,14 +58,18 @@ async function fetchUser(token: string, apiUrl: string) {
 }
 
 function isPublicRoute(pathname: string) {
-  return publicRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'));
+  return publicRoutes.some(
+    (route) => pathname === route || pathname.startsWith(route + '/')
+  );
 }
 
 function isAuthRoute(pathname: string) {
-  return authRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'));
+  return authRoutes.some(
+    (route) => pathname === route || pathname.startsWith(route + '/')
+  );
 }
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Always skip static assets
@@ -79,7 +82,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // DEV MODE: skip all auth middleware GÇö let the client handle everything
+  // DEV MODE: skip all auth middleware -- let the client handle everything
   if (DEV_MOCK) {
     return NextResponse.next();
   }
@@ -97,7 +100,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
   if (isAuthRoute(pathname)) {
     const user = await fetchUser(token, apiUrl);
@@ -124,7 +128,9 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
     if (user.role !== 'SENDER') {
-      return NextResponse.redirect(new URL(roleDashboards[user.role] || '/auth', request.url));
+      return NextResponse.redirect(
+        new URL(roleDashboards[user.role] || '/auth', request.url)
+      );
     }
   }
 
@@ -136,7 +142,9 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
     if (user.role !== 'COURIER') {
-      return NextResponse.redirect(new URL(roleDashboards[user.role] || '/auth', request.url));
+      return NextResponse.redirect(
+        new URL(roleDashboards[user.role] || '/auth', request.url)
+      );
     }
   }
 
