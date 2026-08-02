@@ -1,4 +1,4 @@
-export function AnimatedHero({ title, subtitle, fullBleed }: { title: string; subtitle?: string; fullBleed?: boolean }) {
+﻿export function AnimatedHero({ title, subtitle, fullBleed }: { title: string; subtitle?: string; fullBleed?: boolean }) {
   return (
     <section className={`
       relative h-[25vh] min-h-[200px] flex items-center px-6 md:px-12 lg:px-20

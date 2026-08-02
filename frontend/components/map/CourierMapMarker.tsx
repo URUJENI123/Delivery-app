@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 export function createCourierMarkerElement(photo?: string | null, initials?: string): HTMLDivElement {
   const outer = document.createElement('div');

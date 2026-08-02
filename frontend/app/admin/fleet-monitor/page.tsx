@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -14,7 +14,7 @@ import {
 import Link from 'next/link';
 import { MapWidget } from '@/components/map/MapWidget';
 
-// ── nav items (shared across admin pages) ────────────────────────────────────
+// ΓöÇΓöÇ nav items (shared across admin pages) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 const NAV_ITEMS = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -30,7 +30,7 @@ const BOTTOM_LINKS = [
   { href: '/admin/support', label: 'Help & Support', icon: HelpCircle },
 ];
 
-// ── mock courier detail ───────────────────────────────────────────────────────
+// ΓöÇΓöÇ mock courier detail ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 const COURIER = {
   id: 'KE-401',
@@ -47,7 +47,7 @@ const COURIER = {
     { label: 'Customer: Plot 442, KN 5 Rd', sub: 'Pending delivery', done: false },
   ],
   vehicle: {
-    engineTemp: 'Normal (88°C)',
+    engineTemp: 'Normal (88┬░C)',
     tirePressure: '32 PSI',
     battery: '14.2 V',
   },
@@ -59,7 +59,7 @@ const REGIONAL_HUBS = [
   { name: 'Kacyiru Hub', active: 18, total: 20, color: 'bg-green-400' },
 ];
 
-// ── sidebar ───────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ sidebar ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
@@ -79,7 +79,7 @@ function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void })
       )}>
         <div className="h-20 flex items-center justify-center px-4 border-b border-white/10 flex-shrink-0">
           <img src="/logo.png" alt="Delivery" className="h-14 w-auto object-contain" />
-          <button onClick={onClose} className="lg:hidden ml-auto p-1 text-white/40 hover:text-white">✕</button>
+          <button onClick={onClose} className="lg:hidden ml-auto p-1 text-white/40 hover:text-white">Γ£ò</button>
         </div>
         <nav className="flex-1 overflow-y-auto pt-4 px-3 space-y-0.5">
           {NAV_ITEMS.map((item) => {
@@ -134,7 +134,7 @@ function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void })
   );
 }
 
-// ── page ──────────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ page ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 export default function FleetMonitorPage() {
   const router = useRouter();
@@ -184,7 +184,7 @@ export default function FleetMonitorPage() {
         {/* content: left panel + map */}
         <div className="flex flex-col lg:flex-row flex-1 overflow-hidden" style={{ height: 'calc(100vh - 56px)' }}>
 
-          {/* ── LEFT PANEL ── */}
+          {/* ΓöÇΓöÇ LEFT PANEL ΓöÇΓöÇ */}
           <div className="w-full lg:w-[300px] flex-shrink-0 bg-[#1a0505] border-r border-white/10 overflow-y-auto flex flex-col">
 
             {/* courier header */}
@@ -192,7 +192,7 @@ export default function FleetMonitorPage() {
               <div className="flex items-center justify-between mb-1">
                 <div>
                   <h2 className="text-base font-bold text-white">Courier Details</h2>
-                  <p className="text-[11px] text-white/35">{COURIER.id} • {COURIER.company}</p>
+                  <p className="text-[11px] text-white/35">{COURIER.id} ΓÇó {COURIER.company}</p>
                 </div>
                 <span className="px-2.5 py-1 rounded-full bg-amber-900/50 border border-amber-700/40 text-[10px] font-bold text-amber-400 tracking-wider">
                   {COURIER.status}
@@ -210,7 +210,7 @@ export default function FleetMonitorPage() {
                   <p className="text-[14px] font-semibold text-white truncate">{COURIER.name}</p>
                   <div className="flex items-center gap-1 mt-0.5">
                     <Star size={11} className="fill-amber-400 text-amber-400" />
-                    <span className="text-[12px] text-white/60">{COURIER.rating} • {COURIER.trips.toLocaleString()} trips</span>
+                    <span className="text-[12px] text-white/60">{COURIER.rating} ΓÇó {COURIER.trips.toLocaleString()} trips</span>
                   </div>
                 </div>
                 <button className="w-8 h-8 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center text-white/50 hover:text-white hover:border-white/20 transition-colors">
@@ -322,7 +322,7 @@ export default function FleetMonitorPage() {
             </div>
           </div>
 
-          {/* ── MAP ── */}
+          {/* ΓöÇΓöÇ MAP ΓöÇΓöÇ */}
           <div className="flex-1 relative min-h-[400px] lg:min-h-0">
             <MapWidget
               height="100%"
@@ -332,7 +332,7 @@ export default function FleetMonitorPage() {
               showRoute
             />
 
-            {/* regional hubs panel — top right */}
+            {/* regional hubs panel ΓÇö top right */}
             <div className="absolute top-4 right-4 z-10 bg-[#1a0505]/95 border border-white/10 rounded-xl p-3 min-w-[200px] shadow-xl">
               <div className="flex items-center justify-between mb-2.5">
                 <p className="text-[12px] font-semibold text-white">Regional Hubs</p>

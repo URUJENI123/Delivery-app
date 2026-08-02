@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useRef, useState, KeyboardEvent, ClipboardEvent, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';

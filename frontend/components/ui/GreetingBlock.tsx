@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Bell, Circle } from 'lucide-react';
 import { cn } from '@/lib/utils';

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// ── Shared Layout Constants ──────────────────────────────────────────────────
+// ΓöÇΓöÇ Shared Layout Constants ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 const NAV_ITEMS = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -29,7 +29,7 @@ const BOTTOM_LINKS = [
   { href: '/admin/support', label: 'Help & Support', icon: HelpCircle },
 ];
 
-// ── Sidebar Component ───────────────────────────────────────────────────────
+// ΓöÇΓöÇ Sidebar Component ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
@@ -50,7 +50,7 @@ function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void })
       <div className="h-20 flex items-center justify-center px-4 border-b border-white/10 flex-shrink-0">
         <img src="/logo.png" alt="Delivery" className="h-14 w-auto object-contain" />
         <button onClick={onClose} className="lg:hidden ml-auto p-1 text-white/40 hover:text-white">
-          ✕
+          Γ£ò
         </button>
       </div>
 
@@ -132,13 +132,13 @@ function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void })
   );
 }
 
-// ── Mobile Top Bar Component ─────────────────────────────────────────────────
+// ΓöÇΓöÇ Mobile Top Bar Component ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 function AdminMobileTopBar({ onSidebarToggle }: { onSidebarToggle: () => void }) {
   return (
     <header className="lg:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-[#1a0505] border-b border-white/10 flex items-center px-4 gap-3">
       <button onClick={onSidebarToggle} className="p-1.5 text-white/60 hover:text-white -ml-1">
-        ✕
+        Γ£ò
       </button>
       <div className="flex items-center gap-2">
         <img src="/logo.png" alt="Delivery" className="h-11 w-auto object-contain" />
@@ -153,7 +153,7 @@ function AdminMobileTopBar({ onSidebarToggle }: { onSidebarToggle: () => void })
   );
 }
 
-// ── Mock Data Generator ──────────────────────────────────────────────────────
+// ΓöÇΓöÇ Mock Data Generator ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 const MOCK_USERS_STATIC = [
   { id: '1', name: 'Julian Vance', email: 'j.vance@kineticvelocity.com', status: 'ACTIVE', role: 'Fleet Logistics Manager', lastActive: '2 mins ago' },
@@ -225,7 +225,7 @@ const generateMockUsers = () => {
   return users;
 };
 
-// ── Main Page Component ──────────────────────────────────────────────────────
+// ΓöÇΓöÇ Main Page Component ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 export default function AdminUsersPage() {
   const router = useRouter();
@@ -755,7 +755,7 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* ── Invite New User Modal ── */}
+      {/* ΓöÇΓöÇ Invite New User Modal ΓöÇΓöÇ */}
       {inviteModalOpen && (
         <>
           {/* Backdrop */}
@@ -901,7 +901,7 @@ export default function AdminUsersPage() {
                         <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                       </svg>
                     )}
-                    {inviteSent ? '✓ Invitation Sent!' : inviteSending ? 'Sending…' : 'Send Invitation'}
+                    {inviteSent ? 'Γ£ô Invitation Sent!' : inviteSending ? 'SendingΓÇª' : 'Send Invitation'}
                   </button>
                 </div>
               </form>

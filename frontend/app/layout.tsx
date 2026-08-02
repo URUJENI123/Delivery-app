@@ -1,12 +1,12 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 import { poppins, inter } from '@/lib/fonts';
 import './globals.css';
 import { AppLayout } from '@/components/layout/AppLayout';
 
 export const metadata: Metadata = {
-  title: 'Delivery — Trusted motorcycle delivery for Kigali',
+  title: 'Delivery ΓÇö Trusted motorcycle delivery for Kigali',
   description:
-    'Connect senders with vetted motorcycle couriers through a platform that makes every delivery accountable — with live tracking, chain-of-custody OTP handover, and proof of delivery.',
+    'Connect senders with vetted motorcycle couriers through a platform that makes every delivery accountable ΓÇö with live tracking, chain-of-custody OTP handover, and proof of delivery.',
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },

@@ -1,4 +1,22 @@
-// db.service.ts — re-exported PrismaService for backwards compatibility.
-// All services now import PrismaService directly; this file is kept to avoid
-// breaking any imports that still reference DbService during migration.
-export { PrismaService as DbService } from './prisma.service';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
+
+@Injectable()
+export class DbService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(DbService.name);
+
+  constructor() {
+    super({
+      log: process.env.NODE_ENV === 'development' ? ['query', 'warn', 'error'] : ['warn', 'error'],
+    });
+  }
+
+  async onModuleInit() {
+    await this.$connect();
+    this.logger.log('Database connected (Neon / Prisma)');
+  }
+
+  async onModuleDestroy() {
+    await this.$disconnect();
+  }
+}

@@ -1,4 +1,4 @@
-import { HTMLAttributes, forwardRef } from 'react';
+﻿import { HTMLAttributes, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
@@ -55,7 +55,7 @@ function StatCard({ label, value, icon: Icon, iconBg, iconColor, link, trend }: 
         </div>
         {trend && (
           <span className={cn('text-tiny font-semibold flex items-center gap-1', trend.positive ? 'text-success' : 'text-danger')}>
-            {trend.positive ? '↑' : '↓'} {trend.value}
+            {trend.positive ? 'Γåæ' : 'Γåô'} {trend.value}
           </span>
         )}
       </div>

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
@@ -54,7 +54,7 @@ export default function CourierProfilePage() {
               className={i < Math.floor(rating) ? 'text-warning fill-warning' : 'text-gray-300 fill-gray-300'}
             />
           ))}
-          <span className="text-body-sm text-gray-500 ml-1">{rating || '—'}</span>
+          <span className="text-body-sm text-gray-500 ml-1">{rating || 'ΓÇö'}</span>
         </div>
         <div className="flex items-center justify-center gap-1 mt-2">
           <Calendar size={14} className="text-gray-400" />
@@ -70,7 +70,7 @@ export default function CourierProfilePage() {
         </Card>
         <Card className="p-4 text-center">
           <Star size={20} className="text-warning mx-auto" />
-          <p className="font-display text-h3 font-extrabold text-gray-950 mt-1">{rating || '—'}</p>
+          <p className="font-display text-h3 font-extrabold text-gray-950 mt-1">{rating || 'ΓÇö'}</p>
           <p className="text-tiny text-gray-500">Rating</p>
         </Card>
         <Card className="p-4 text-center">

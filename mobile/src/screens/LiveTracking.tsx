@@ -116,7 +116,8 @@ export function LiveTracking({ navigation }: LiveTrackingProps) {
         <MapView
           style={styles.mapView}
           provider={PROVIDER_DEFAULT}
-          initialRegion={MAP_REGION}          customMapStyle={darkMapStyle}
+          initialRegion={MAP_REGION}
+          customMapStyle={darkMapStyle}
           scrollEnabled
           zoomEnabled
           pitchEnabled={false}
@@ -164,6 +165,7 @@ export function LiveTracking({ navigation }: LiveTrackingProps) {
           <View style={styles.hubDot} />
           <Text style={styles.hubLabel}>Jean-Claude is 4 mins away</Text>
         </View>
+
         {/* Floating Controls */}
         <View style={styles.floatingControls}>
           <TouchableOpacity style={styles.floatingBtn}>
@@ -412,7 +414,6 @@ const styles = StyleSheet.create({
   hubMarker: {
     position: 'absolute',
     bottom: 80,
-    left: 16,
     left: 16,
     flexDirection: 'row',
     alignItems: 'center',

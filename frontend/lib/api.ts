@@ -1,10 +1,10 @@
-/**
- * DEV MOCK — all API calls return mock data locally.
+﻿/**
+ * DEV MOCK ΓÇö all API calls return mock data locally.
  * No backend or Supabase connection needed.
  * To restore real integration, replace this file with the actual fetch-based client.
  */
 
-// ── MOCK DATA ────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ MOCK DATA ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 const ADMIN_USER = {
   id: 'admin-001', supabaseId: 'sb-admin-001', email: 'admin@delivery.rw',
@@ -138,7 +138,7 @@ const MOCK_COURIER_DASHBOARD = {
   avgRating: 4.8, totalRatings: 137,
 };
 
-// ── ROUTER ───────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ ROUTER ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 async function delay(ms = 80) {
   return new Promise((r) => setTimeout(r, ms));

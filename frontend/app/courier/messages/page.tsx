@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -109,7 +109,7 @@ export default function CourierMessagesPage() {
                   </div>
                   <p className="font-body text-[11px] text-red-600 font-medium truncate mt-0.5">
                     {conv.pickupAddress && conv.dropoffAddress
-                      ? `#${conv.trackingCode || conv.deliveryId.slice(0, 8)} · ${conv.pickupAddress} → ${conv.dropoffAddress}`
+                      ? `#${conv.trackingCode || conv.deliveryId.slice(0, 8)} ┬╖ ${conv.pickupAddress} ΓåÆ ${conv.dropoffAddress}`
                       : `#${conv.trackingCode || conv.deliveryId.slice(0, 8)}`}
                   </p>
                   <p className="font-body text-xs text-gray-500 truncate">

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -47,7 +47,7 @@ export default function CourierEarningsPage() {
           {[
             { value: completedTrips, label: 'Deliveries', icon: Bike },
             { value: `${(completionRate * 100).toFixed(0)}%`, label: 'Completion', icon: Clock },
-            { value: avgRating ? avgRating.toFixed(1) : '—', label: 'Rating', icon: Star },
+            { value: avgRating ? avgRating.toFixed(1) : 'ΓÇö', label: 'Rating', icon: Star },
           ].map((item) => {
             const Icon = item.icon;
             return (

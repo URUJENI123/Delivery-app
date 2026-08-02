@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { Module } from '@nestjs/common';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
@@ -19,9 +18,7 @@ import { CommonModule } from './common/common.module';
 @Module({
   imports: [
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
-    // CommonModule is @Global() — exports DeliveryGateway and JwtModule to all modules
     CommonModule,
-    // DbModule is @Global() — exports PrismaService to all modules
     DbModule,
     AuthModule,
     UsersModule,

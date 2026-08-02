@@ -1,10 +1,10 @@
-/**
+﻿/**
  * Central mock data store used by lib/api.ts (dev mode).
  * Replace with real backend calls when ready.
  */
 
 export const MOCK_DB = {
-  // ── USERS ────────────────────────────────────────────────────────────
+  // ΓöÇΓöÇ USERS ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   adminUser: {
     id: 'admin-001',
     supabaseId: 'sb-admin-001',
@@ -52,7 +52,7 @@ export const MOCK_DB = {
     onboardingSession: null,
   },
 
-  // current user (shown to /auth/me) — default to admin for dashboard access
+  // current user (shown to /auth/me) ΓÇö default to admin for dashboard access
   get currentUser() {
     if (typeof window === 'undefined') return MOCK_DB.adminUser;
     const token = localStorage.getItem('access_token');
@@ -60,7 +60,7 @@ export const MOCK_DB = {
     return MOCK_DB.adminUser;
   },
 
-  // ── USERS LIST ───────────────────────────────────────────────────────
+  // ΓöÇΓöÇ USERS LIST ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   users: [
     { id: 'sender-001', fullName: 'Alice Uwimana', phone: '+250780000001', role: 'SENDER', isActive: true, createdAt: '2025-01-10T08:00:00Z' },
     { id: 'courier-001', fullName: 'Bob Mugisha', phone: '+250780000002', role: 'COURIER', isActive: true, createdAt: '2025-01-12T09:00:00Z' },
@@ -69,7 +69,7 @@ export const MOCK_DB = {
     { id: 'sender-003', fullName: 'Emma Iradukunda', phone: '+250780000005', role: 'SENDER', isActive: true, createdAt: '2025-03-05T07:30:00Z' },
   ],
 
-  // ── COURIERS ─────────────────────────────────────────────────────────
+  // ΓöÇΓöÇ COURIERS ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   couriers: [
     {
       id: 'cp-001',
@@ -109,7 +109,7 @@ export const MOCK_DB = {
     },
   ],
 
-  // ── DELIVERIES ───────────────────────────────────────────────────────
+  // ΓöÇΓöÇ DELIVERIES ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   deliveries: [
     {
       id: 'del-001',
@@ -193,7 +193,7 @@ export const MOCK_DB = {
     },
   ],
 
-  // ── DISPUTES ─────────────────────────────────────────────────────────
+  // ΓöÇΓöÇ DISPUTES ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   disputes: [
     {
       id: 'disp-001',
@@ -205,14 +205,14 @@ export const MOCK_DB = {
     },
   ],
 
-  // ── MESSAGES ─────────────────────────────────────────────────────────
+  // ΓöÇΓöÇ MESSAGES ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   messages: [
     { id: 'msg-001', senderId: 'courier-001', text: 'I am on my way to the pickup point', createdAt: new Date(Date.now() - 1200_000).toISOString(), isSender: false },
     { id: 'msg-002', senderId: 'sender-001', text: 'Great, I will be ready!', createdAt: new Date(Date.now() - 1100_000).toISOString(), isSender: true },
     { id: 'msg-003', senderId: 'courier-001', text: 'Arrived at pickup. Please come down.', createdAt: new Date(Date.now() - 600_000).toISOString(), isSender: false },
   ],
 
-  // ── WALLET ───────────────────────────────────────────────────────────
+  // ΓöÇΓöÇ WALLET ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   wallet: {
     balance: 45000,
     transactions: [
@@ -223,7 +223,7 @@ export const MOCK_DB = {
     ],
   },
 
-  // ── ADMIN DASHBOARD ──────────────────────────────────────────────────
+  // ΓöÇΓöÇ ADMIN DASHBOARD ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   adminDashboard: {
     activeDeliveries: 2,
     onlineCouriers: 1,
@@ -246,13 +246,13 @@ export const MOCK_DB = {
     ],
   },
 
-  // ── SENDER DASHBOARD ─────────────────────────────────────────────────
+  // ΓöÇΓöÇ SENDER DASHBOARD ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   senderDashboard: {
     totalSpent: 8300,
     savedAddresses: 'Kacyiru, KG 7 Ave, Kigali',
   },
 
-  // ── COURIER DASHBOARD ────────────────────────────────────────────────
+  // ΓöÇΓöÇ COURIER DASHBOARD ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   courierDashboard: {
     courier: {
       id: 'cp-001',

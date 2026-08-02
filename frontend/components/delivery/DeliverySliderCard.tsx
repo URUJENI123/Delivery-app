@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { cn } from '@/lib/utils';
 import { Bike, ChevronRight, MapPin } from 'lucide-react';

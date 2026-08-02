@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { MapPin, Crosshair, X } from 'lucide-react';
@@ -25,7 +25,7 @@ export function MapPicker({ initialCoords, onConfirm, onClose }: MapPickerProps)
 
   const placeMarker = useCallback(async (lat: number, lng: number) => {
     setSelected({ lat, lng });
-    setAddress('Loading…');
+    setAddress('LoadingΓÇª');
 
     try {
       const result = await reverseGeocode(lat, lng);

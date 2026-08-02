@@ -1,3 +1,2 @@
-// supabase-auth.guard.ts — re-exports JwtAuthGuard under the old name so that
-// all controllers that import SupabaseAuthGuard continue to work without changes.
+// Alias kept for backward compatibility — all guards now use local JWT
 export { JwtAuthGuard as SupabaseAuthGuard } from './jwt-auth.guard';

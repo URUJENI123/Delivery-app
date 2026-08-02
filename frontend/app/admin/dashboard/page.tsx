@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -15,7 +15,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { MapWidget } from '@/components/map/MapWidget';
 
-// ── constants ─────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ constants ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 const NAV_ITEMS = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -45,7 +45,7 @@ const HUB_DATA = [
   { name: 'Gisozi Hub', pct: 45 },
 ];
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ helpers ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 function timeAgo(iso: string) {
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -69,7 +69,7 @@ function HubBar({ name, pct }: { name: string; pct: number }) {
   );
 }
 
-// ── sidebar ───────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ sidebar ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
@@ -91,9 +91,9 @@ function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void })
       {/* logo */}
       <div className="h-20 flex items-center justify-center px-4 border-b border-white/10 flex-shrink-0">
         <img src="/logo.png" alt="Delivery" className="h-14 w-auto object-contain" />
-        {/* close button — mobile only */}
+        {/* close button ΓÇö mobile only */}
         <button onClick={onClose} className="lg:hidden ml-auto p-1 text-white/40 hover:text-white">
-          ✕
+          Γ£ò
         </button>
       </div>
 
@@ -176,7 +176,7 @@ function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void })
   );
 }
 
-// ── mobile top bar ────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ mobile top bar ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 function AdminMobileTopBar({ onSidebarToggle }: { onSidebarToggle: () => void }) {
   return (
@@ -197,7 +197,7 @@ function AdminMobileTopBar({ onSidebarToggle }: { onSidebarToggle: () => void })
   );
 }
 
-// ── main page ─────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ main page ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -257,13 +257,13 @@ export default function AdminDashboardPage() {
   return (
     <div className="min-h-screen bg-[#120808] text-white flex">
 
-      {/* ── SIDEBAR ── */}
+      {/* ΓöÇΓöÇ SIDEBAR ΓöÇΓöÇ */}
       <AdminSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      {/* ── MOBILE TOP BAR ── */}
+      {/* ΓöÇΓöÇ MOBILE TOP BAR ΓöÇΓöÇ */}
       <AdminMobileTopBar onSidebarToggle={() => setSidebarOpen(true)} />
 
-      {/* ── MAIN CONTENT (offset by sidebar width on desktop) ── */}
+      {/* ΓöÇΓöÇ MAIN CONTENT (offset by sidebar width on desktop) ΓöÇΓöÇ */}
       <div className="flex-1 lg:ml-[240px] pt-14 lg:pt-0 min-w-0">
 
         {/* desktop page header */}
@@ -290,7 +290,7 @@ export default function AdminDashboardPage() {
         {/* scrollable content */}
         <div className="px-4 lg:px-6 pb-10">
 
-          {/* ── KPI ROW ── */}
+          {/* ΓöÇΓöÇ KPI ROW ΓöÇΓöÇ */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-5">
             {kpis.map((k) => {
               const Icon = k.icon;
@@ -322,7 +322,7 @@ export default function AdminDashboardPage() {
             })}
           </div>
 
-          {/* ── MAIN GRID ── */}
+          {/* ΓöÇΓöÇ MAIN GRID ΓöÇΓöÇ */}
           <div className="grid lg:grid-cols-[320px_1fr] gap-4 mt-4">
 
             {/* Live Feed */}
@@ -412,7 +412,7 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
 
-                {/* Urban Coverage — real map */}
+                {/* Urban Coverage ΓÇö real map */}
                 <div className="relative bg-[#1e0e0e] border border-white/10 rounded-xl overflow-hidden min-h-[220px]">
                   <div className="absolute inset-0">
                     <MapWidget height="100%" className="!rounded-none" interactive={false} showCourier={false} showRoute={false} />
@@ -437,7 +437,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* ── ALERTS ── */}
+          {/* ΓöÇΓöÇ ALERTS ΓöÇΓöÇ */}
           {pendingCount > 0 && (
             <div className="mt-4 bg-[#1e0e0e] border border-white/10 rounded-xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">

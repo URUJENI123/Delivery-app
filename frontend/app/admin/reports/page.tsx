@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// ── Shared Navigation Layout Constants ───────────────────────────────────────
+// ΓöÇΓöÇ Shared Navigation Layout Constants ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 const NAV_ITEMS = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -30,7 +30,7 @@ const BOTTOM_LINKS = [
   { href: '/admin/support', label: 'Help & Support', icon: HelpCircle },
 ];
 
-// ── Sidebar Component ───────────────────────────────────────────────────────
+// ΓöÇΓöÇ Sidebar Component ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
@@ -51,7 +51,7 @@ function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void })
       <div className="h-20 flex items-center justify-center px-4 border-b border-white/10 flex-shrink-0">
         <img src="/logo.png" alt="Delivery" className="h-14 w-auto object-contain" />
         <button onClick={onClose} className="lg:hidden ml-auto p-1 text-white/40 hover:text-white">
-          ✕
+          Γ£ò
         </button>
       </div>
 
@@ -133,13 +133,13 @@ function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void })
   );
 }
 
-// ── Mobile Top Bar Component ─────────────────────────────────────────────────
+// ΓöÇΓöÇ Mobile Top Bar Component ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 function AdminMobileTopBar({ onSidebarToggle }: { onSidebarToggle: () => void }) {
   return (
     <header className="lg:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-[#1a0505] border-b border-white/10 flex items-center px-4 gap-3">
       <button onClick={onSidebarToggle} className="p-1.5 text-white/60 hover:text-white -ml-1">
-        ✕
+        Γ£ò
       </button>
       <div className="flex items-center gap-2">
         <img src="/logo.png" alt="Delivery" className="h-11 w-auto object-contain" />
@@ -154,7 +154,7 @@ function AdminMobileTopBar({ onSidebarToggle }: { onSidebarToggle: () => void })
   );
 }
 
-// ── Mock Data Generator ──────────────────────────────────────────────────────
+// ΓöÇΓöÇ Mock Data Generator ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 const generatePerformanceData = () => {
   const data = [];
@@ -204,7 +204,7 @@ const WEEKLY_CHART_FILL = "M 10,240 Q 60,230 110,210 T 210,250 T 310,200 T 410,2
 const MONTHLY_CHART_PATH = "M 10,220 C 100,280 200,150 300,230 C 400,310 500,120 600,190 C 700,260 750,140 810,160";
 const MONTHLY_CHART_FILL = "M 10,220 C 100,280 200,150 300,230 C 400,310 500,120 600,190 C 700,260 750,140 810,160 L 810,355 L 10,355 Z";
 
-// ── Main Page Component ──────────────────────────────────────────────────────
+// ΓöÇΓöÇ Main Page Component ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 export default function ReportsPage() {
   const router = useRouter();
@@ -376,7 +376,7 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          {/* ── KPI METRICS CARDS ROW ── */}
+          {/* ΓöÇΓöÇ KPI METRICS CARDS ROW ΓöÇΓöÇ */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
             {/* Card 1: Success Rate */}
             <div className="relative bg-[#1e0e0e] border border-white/5 rounded-xl p-5 overflow-hidden shadow-[0_0_15px_-3px_rgba(255,255,255,0.01)] hover:border-white/10 transition-all">
@@ -442,7 +442,7 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          {/* ── CHARTS ROW: Volume Trends & Regional Performance ── */}
+          {/* ΓöÇΓöÇ CHARTS ROW: Volume Trends & Regional Performance ΓöÇΓöÇ */}
           <div className="grid lg:grid-cols-[1fr_320px] gap-6 mt-6">
             {/* Delivery Volume Trends Area Chart Card */}
             <div className="bg-[#1e0e0e] border border-white/10 rounded-xl p-5 flex flex-col">
@@ -545,7 +545,7 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          {/* ── PERFORMANCE BREAKDOWN TABLE ── */}
+          {/* ΓöÇΓöÇ PERFORMANCE BREAKDOWN TABLE ΓöÇΓöÇ */}
           <div className="bg-[#1e0e0e] border border-white/10 rounded-xl mt-6 overflow-hidden">
             {/* Table Header Filter controls */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -153,7 +153,7 @@ export function DesktopTopBar({ title, subtitle }: { title?: string; subtitle?: 
       </div>
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 h-10 px-3 border border-gray-200 rounded-md text-body-sm text-gray-700">
-          <span>🌐 EN</span>
+          <span>≡ƒîÉ EN</span>
           <ChevronDown size={14} />
         </div>
         <ThemeToggle />

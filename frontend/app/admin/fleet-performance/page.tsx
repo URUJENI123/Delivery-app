@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-// ── nav ───────────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ nav ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 const NAV_ITEMS = [
   { href: '/admin/dashboard',   label: 'Dashboard', icon: LayoutDashboard },
@@ -29,7 +29,7 @@ const BOTTOM_LINKS = [
   { href: '/admin/support', label: 'Help & Support', icon: HelpCircle },
 ];
 
-// ── mock data ─────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ mock data ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 const TOP_PERFORMERS = [
   { initials: 'JP', name: 'Jean-Pierre Kagabo', id: 'KE-4029', earnings: 'FRW 45,200', rating: 4.9, status: 'IN TRANSIT',  statusColor: 'bg-red-900/50 border-red-600/50 text-red-300' },
@@ -48,7 +48,7 @@ const URGENT_ALERTS = [
   { id: 'KE-112', issue: 'Brake Pad Wear',    sub: 'Scheduled: Tomorrow 09:00',   icon: Wrench        },
 ];
 
-// ── sidebar ───────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ sidebar ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
@@ -68,7 +68,7 @@ function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void })
       )}>
         <div className="h-20 flex items-center justify-center px-4 border-b border-white/10 flex-shrink-0">
           <img src="/logo.png" alt="Delivery" className="h-14 w-auto object-contain" />
-          <button onClick={onClose} className="lg:hidden ml-auto p-1 text-white/40 hover:text-white">✕</button>
+          <button onClick={onClose} className="lg:hidden ml-auto p-1 text-white/40 hover:text-white">Γ£ò</button>
         </div>
         <nav className="flex-1 overflow-y-auto pt-4 px-3 space-y-0.5">
           {NAV_ITEMS.map((item) => {
@@ -115,7 +115,7 @@ function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void })
   );
 }
 
-// ── page ──────────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ page ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 export default function FleetPerformancePage() {
   const router = useRouter();
@@ -150,7 +150,7 @@ export default function FleetPerformancePage() {
 
         <div className="px-4 lg:px-8 pb-10 mt-6">
 
-          {/* ── PAGE TITLE + SEARCH ── */}
+          {/* ΓöÇΓöÇ PAGE TITLE + SEARCH ΓöÇΓöÇ */}
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-6">
             <div>
               <p className="text-[11px] text-red-400 uppercase tracking-widest font-semibold mb-1">Operations Control</p>
@@ -167,10 +167,10 @@ export default function FleetPerformancePage() {
             </div>
           </div>
 
-          {/* ── MAIN GRID ── */}
+          {/* ΓöÇΓöÇ MAIN GRID ΓöÇΓöÇ */}
           <div className="grid lg:grid-cols-[1fr_320px] gap-5">
 
-            {/* ── LEFT COLUMN ── */}
+            {/* ΓöÇΓöÇ LEFT COLUMN ΓöÇΓöÇ */}
             <div className="space-y-5">
 
               {/* Top Performers */}
@@ -239,7 +239,7 @@ export default function FleetPerformancePage() {
               </div>
             </div>
 
-            {/* ── RIGHT COLUMN ── */}
+            {/* ΓöÇΓöÇ RIGHT COLUMN ΓöÇΓöÇ */}
             <div className="space-y-4">
 
               {/* Live Metrics */}
@@ -253,7 +253,7 @@ export default function FleetPerformancePage() {
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-1.5">
                     <p className="text-[10px] text-red-200/50 uppercase tracking-widest">Avg Engine Temp</p>
-                    <span className="font-display text-xl font-bold text-white">94°C</span>
+                    <span className="font-display text-xl font-bold text-white">94┬░C</span>
                   </div>
                   {/* segmented bar */}
                   <div className="flex gap-0.5 h-2">
@@ -264,7 +264,7 @@ export default function FleetPerformancePage() {
                       )} />
                     ))}
                   </div>
-                  <p className="text-[10px] text-red-200/40 mt-1.5">Normal Operating Range: 85°C – 105°C</p>
+                  <p className="text-[10px] text-red-200/40 mt-1.5">Normal Operating Range: 85┬░C ΓÇô 105┬░C</p>
                 </div>
 
                 {/* Urgent alerts */}

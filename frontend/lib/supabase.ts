@@ -1,5 +1,5 @@
-/**
- * DEV STUB — Supabase is not connected in dev mode.
+﻿/**
+ * DEV STUB ΓÇö Supabase is not connected in dev mode.
  * All auth methods are no-ops or return empty data.
  * Replace this with the real client when integrating Supabase.
  */

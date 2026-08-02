@@ -8,14 +8,30 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { SenderSignupDto } from './dto/sender-signup.dto';
 import { SenderSigninDto } from './dto/sender-signin.dto';
 import { AdminSigninDto } from './dto/admin-signin.dto';
-import { GoogleAuthDto } from './dto/google-auth.dto';
-import { GoogleCallbackDto } from './dto/google-callback.dto';
 import { RequestPasswordResetDto, UpdatePasswordDto, ResendConfirmationDto } from './dto/password-reset.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { SupabaseAuthGuard } from './guards/supabase-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Roles } from './decorators/roles.decorator';
 import { User, UserRole } from '../types';
+import { IsString, IsOptional, IsEmail } from 'class-validator';
+
+class GoogleProfileDto {
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @IsOptional()
+  fullName?: string;
+
+  @IsString()
+  @IsOptional()
+  googleId?: string;
+
+  @IsString()
+  @IsOptional()
+  avatarUrl?: string;
+}
 
 @Controller('auth')
 export class AuthController {
@@ -63,21 +79,21 @@ export class AuthController {
     return result;
   }
 
+  /** Google OAuth: frontend passes decoded profile fields */
   @Post('google')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async googleAuth(@Body() dto: GoogleAuthDto, @Res({ passthrough: true }) res: Response) {
-    const result = await this.authService.googleAuth(dto.idToken);
+  async googleAuth(@Body() dto: GoogleProfileDto, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.googleAuth(dto);
     this.setAuthCookies(res, result.access_token, result.refresh_token);
     return result;
   }
 
+  /** Legacy alias kept for compatibility */
   @Post('google/callback')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async googleCallback(@Body() dto: GoogleCallbackDto, @Res({ passthrough: true }) res: Response) {
-    const result = await this.authService.googleCallback(dto.accessToken);
-    if (result.access_token && result.refresh_token) {
-      this.setAuthCookies(res, result.access_token, result.refresh_token);
-    }
+  async googleCallback(@Body() dto: GoogleProfileDto, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.googleAuth(dto);
+    this.setAuthCookies(res, result.access_token, result.refresh_token);
     return result;
   }
 
@@ -91,9 +107,7 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   async verifyOtp(@Body() dto: VerifyOtpDto, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.verifyOtp(dto.phone, dto.token);
-    if (result.access_token && result.refresh_token) {
-      this.setAuthCookies(res, result.access_token, result.refresh_token);
-    }
+    this.setAuthCookies(res, result.access_token, result.refresh_token);
     return result;
   }
 
@@ -112,7 +126,7 @@ export class AuthController {
   }
 
   @Post('password/update')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SupabaseAuthGuard)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   async updatePassword(@CurrentUser() user: User, @Body() dto: UpdatePasswordDto) {
     return this.authService.updatePassword(user.id, dto.newPassword);
@@ -125,42 +139,34 @@ export class AuthController {
   }
 
   @Get('sessions')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SupabaseAuthGuard)
   async getSessions(@CurrentUser() user: User) {
     return this.authService.getSessions(user.id);
   }
 
   @Post('sessions/revoke-all')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SupabaseAuthGuard)
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   async revokeAllSessions(@CurrentUser() user: User) {
     return this.authService.revokeAllSessions(user.id);
   }
 
   @Post('logout')
-  @UseGuards(JwtAuthGuard)
-  async logout(@CurrentUser() user: User, @Body() body: RefreshTokenDto, @Res({ passthrough: true }) res: Response) {
-    // Revoke the specific refresh token if provided
-    if (body?.refresh_token) {
-      try {
-        await this.authService['prisma'].refreshToken.deleteMany({
-          where: { userId: user.id, token: body.refresh_token },
-        });
-      } catch { /* ignore */ }
-    }
+  @UseGuards(SupabaseAuthGuard)
+  async logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie('access_token', { path: '/' });
     res.clearCookie('refresh_token', { path: '/' });
     return { message: 'Logged out successfully' };
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SupabaseAuthGuard)
   async getProfile(@CurrentUser() user: User) {
     return this.authService.getProfile(user.id);
   }
 
   @Patch('role')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(SupabaseAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   async updateRole(
     @CurrentUser() user: User,
@@ -176,7 +182,7 @@ export class AuthController {
       httpOnly: true,
       secure: isProduction,
       sameSite: 'lax',
-      maxAge: 60 * 60 * 1000,       // 1 hour
+      maxAge: 60 * 60 * 1000, // 1 hour
       path: '/',
     });
     res.cookie('refresh_token', refreshToken, {

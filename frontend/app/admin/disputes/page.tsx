@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-// ── nav ───────────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ nav ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 const NAV_ITEMS = [
   { href: '/admin/dashboard',  label: 'Dashboard', icon: LayoutDashboard },
@@ -29,7 +29,7 @@ const BOTTOM_LINKS = [
   { href: '/admin/support', label: 'Help & Support', icon: HelpCircle },
 ];
 
-// ── mock data ─────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ mock data ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 const PROBLEMATIC_HUBS = [
   {
@@ -60,31 +60,31 @@ const SERVICE_INFRA = [
 
 const ACTIVE_QUEUE = [
   {
-    tag: 'URGENT • EXPRESS', id: '#KG-4921',
-    title: 'Medical Supplies Delivery', route: 'CHUK Hospital → Nyarutarama',
+    tag: 'URGENT ΓÇó EXPRESS', id: '#KG-4921',
+    title: 'Medical Supplies Delivery', route: 'CHUK Hospital ΓåÆ Nyarutarama',
     action: 'RE-ASSIGN', actionStyle: 'bg-red-600 hover:bg-red-700 text-white',
     extra: '+12', status: null,
   },
   {
-    tag: 'STANDARD • PENDING', id: '#KG-5012',
-    title: 'Gourmet Catering Order', route: 'Kimihurura → Kiyovu',
+    tag: 'STANDARD ΓÇó PENDING', id: '#KG-5012',
+    title: 'Gourmet Catering Order', route: 'Kimihurura ΓåÆ Kiyovu',
     action: 'BOOST', actionStyle: 'bg-white/10 hover:bg-white/15 text-white/70 border border-white/15',
     sub: 'Finding nearby courier...',
   },
   {
-    tag: 'STANDARD • IN TRANSIT', id: '#KG-5033',
-    title: 'E-commerce Bulk Pack', route: 'Warehousing → Kacyiru',
+    tag: 'STANDARD ΓÇó IN TRANSIT', id: '#KG-5033',
+    title: 'E-commerce Bulk Pack', route: 'Warehousing ΓåÆ Kacyiru',
     action: null,
     badge: 'Picked Up', eta: 'ETA: 12:40',
   },
   {
-    tag: 'ECONOMY • SCHEDULED', id: '#KG-5100',
-    title: 'Documents Batch', route: 'Gikondo → Town Hall',
+    tag: 'ECONOMY ΓÇó SCHEDULED', id: '#KG-5100',
+    title: 'Documents Batch', route: 'Gikondo ΓåÆ Town Hall',
     action: null,
   },
 ];
 
-// ── sidebar ───────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ sidebar ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
@@ -104,7 +104,7 @@ function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void })
       )}>
         <div className="h-20 flex items-center justify-center px-4 border-b border-white/10 flex-shrink-0">
           <img src="/logo.png" alt="Delivery" className="h-14 w-auto object-contain" />
-          <button onClick={onClose} className="lg:hidden ml-auto p-1 text-white/40 hover:text-white">✕</button>
+          <button onClick={onClose} className="lg:hidden ml-auto p-1 text-white/40 hover:text-white">Γ£ò</button>
         </div>
         <nav className="flex-1 overflow-y-auto pt-4 px-3 space-y-0.5">
           {NAV_ITEMS.map((item) => {
@@ -151,7 +151,7 @@ function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void })
   );
 }
 
-// ── clock ─────────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ clock ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 function LiveClock() {
   const [time, setTime] = useState('');
@@ -167,7 +167,7 @@ function LiveClock() {
   return <span>{time}</span>;
 }
 
-// ── page ──────────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ page ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 export default function OperationsPage() {
   const router = useRouter();
@@ -212,7 +212,7 @@ export default function OperationsPage() {
         {/* 3-column layout */}
         <div className="flex flex-col lg:flex-row h-[calc(100vh-48px)] overflow-hidden">
 
-          {/* ── LEFT PANEL ── */}
+          {/* ΓöÇΓöÇ LEFT PANEL ΓöÇΓöÇ */}
           <div className="w-full lg:w-[260px] flex-shrink-0 border-r border-white/10 overflow-y-auto flex flex-col">
 
             {/* Problematic Hubs */}
@@ -272,10 +272,10 @@ export default function OperationsPage() {
             </div>
           </div>
 
-          {/* ── CENTRE MAP ── */}
+          {/* ΓöÇΓöÇ CENTRE MAP ΓöÇΓöÇ */}
           <div className="flex-1 flex flex-col min-w-0 relative">
 
-            {/* map — fills available space */}
+            {/* map ΓÇö fills available space */}
             <div className="flex-1 relative min-h-[300px]">
               <MapWidget
                 height="100%"
@@ -338,7 +338,7 @@ export default function OperationsPage() {
             </div>
           </div>
 
-          {/* ── RIGHT PANEL ── */}
+          {/* ΓöÇΓöÇ RIGHT PANEL ΓöÇΓöÇ */}
           <div className="w-full lg:w-[280px] flex-shrink-0 border-l border-white/10 overflow-y-auto">
             <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/10">
               <div className="flex items-center gap-2">
@@ -402,7 +402,7 @@ export default function OperationsPage() {
 
         </div>
 
-        {/* floating locate button — bottom right */}
+        {/* floating locate button ΓÇö bottom right */}
         <button
           onClick={() => router.push('/admin/fleet-monitor')}
           className="fixed bottom-6 right-6 w-12 h-12 bg-red-200 hover:bg-red-300 rounded-full shadow-xl flex items-center justify-center transition-colors z-30"

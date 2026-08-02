@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -182,7 +182,7 @@ export default function LandingPage() {
           />
         )}
 
-        {/* Mobile nav — slide from left */}
+        {/* Mobile nav ΓÇö slide from left */}
         <div
           className={`fixed top-0 left-0 bottom-0 w-72 bg-white z-50 md:hidden animate-slide-in-left flex flex-col ${
             mobileOpen ? 'pointer-events-auto' : 'pointer-events-none opacity-0'
@@ -223,7 +223,7 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* HERO — Red background with animated decorations */}
+      {/* HERO ΓÇö Red background with animated decorations */}
       <section ref={heroRef} className="min-h-screen flex items-center px-6 md:px-12 lg:px-20 pt-24 relative overflow-hidden bg-red-600">
         {/* Animated decorative elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -348,7 +348,7 @@ export default function LandingPage() {
                   <div className="absolute top-8 left-0 right-0 p-4 pt-6">
                     <div className="bg-white/95 rounded-xl border border-gray-200 p-3 mb-3">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold text-gray-950">Delivery · #DEL-2841</span>
+                        <span className="text-xs font-bold text-gray-950">Delivery ┬╖ #DEL-2841</span>
                         <span className="text-[10px] font-bold text-success bg-success/10 px-2 py-0.5 rounded-full">In Transit</span>
                       </div>
                       <div className="flex items-center gap-2 text-[10px] text-gray-500">
@@ -382,7 +382,7 @@ export default function LandingPage() {
                         </div>
                         <div>
                           <p className="text-[11px] font-bold text-gray-950">Courier arriving</p>
-                          <p className="text-[10px] text-gray-500">ETA: 8 minutes · Jean P.</p>
+                          <p className="text-[10px] text-gray-500">ETA: 8 minutes ┬╖ Jean P.</p>
                         </div>
                       </div>
                     </div>
@@ -412,7 +412,7 @@ export default function LandingPage() {
               <div className="absolute -right-4 top-32 bg-white rounded-xl border border-gray-200 p-3 animate-bounce-subtle shadow-lg" style={{ animationDelay: '1s' }}>
                 <div className="flex items-center gap-2">
                   <Star size={14} className="text-warning fill-warning" />
-                  <span className="text-xs font-bold text-gray-950">4.9 ★</span>
+                  <span className="text-xs font-bold text-gray-950">4.9 Γÿà</span>
                 </div>
               </div>
             </div>
@@ -427,7 +427,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* TRUST BAR — real data only */}
+      {/* TRUST BAR ΓÇö real data only */}
       <FadeInSection>
         <section className="border-y border-gray-200 bg-gray-50">
           <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-12">
@@ -579,7 +579,7 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <p className="font-bold text-sm text-gray-950">Active delivery</p>
-                    <p className="text-xs text-gray-500">Kacyiru → Nyarugenge · 8 min</p>
+                    <p className="text-xs text-gray-500">Kacyiru ΓåÆ Nyarugenge ┬╖ 8 min</p>
                   </div>
                 </div>
                 <div className="space-y-4">
@@ -621,7 +621,7 @@ export default function LandingPage() {
                 Built for Kigali
               </h2>
               <p className="text-gray-400 text-lg leading-relaxed max-w-lg mx-auto">
-                OTP-secured chain of custody, live GPS tracking, and instant courier matching — every step designed for accountability.
+                OTP-secured chain of custody, live GPS tracking, and instant courier matching ΓÇö every step designed for accountability.
               </p>
             </div>
           </div>

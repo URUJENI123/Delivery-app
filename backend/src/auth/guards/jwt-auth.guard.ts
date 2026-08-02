@@ -1,6 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../../db/prisma.service';
+import { DbService } from '../../db/db.service';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -8,7 +8,7 @@ export class JwtAuthGuard implements CanActivate {
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly prisma: PrismaService,
+    private readonly db: DbService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -20,17 +20,10 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     try {
-      const payload = this.jwtService.verify<{ sub: string; role: string }>(token, {
-        secret: process.env.JWT_SECRET,
-      });
+      const payload = this.jwtService.verify<{ sub: string; role: string }>(token);
 
-      const user = await this.prisma.user.findUnique({
+      const user = await this.db.user.findUnique({
         where: { id: payload.sub },
-        include: {
-          courierProfile: true,
-          senderProfile: true,
-          onboardingSession: true,
-        },
       });
 
       if (!user) {
@@ -38,7 +31,7 @@ export class JwtAuthGuard implements CanActivate {
       }
 
       if (!user.isActive) {
-        throw new UnauthorizedException('Account is deactivated');
+        throw new UnauthorizedException('User account is deactivated');
       }
 
       request.user = user;

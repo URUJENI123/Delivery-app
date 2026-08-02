@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -215,7 +215,7 @@ export default function SendPage() {
                   <textarea
                     value={pickupDetails}
                     onChange={(e) => setPickupDetails(e.target.value)}
-                    placeholder="Describe how to find this place — landmarks, building name, floor, gate color, etc."
+                    placeholder="Describe how to find this place ΓÇö landmarks, building name, floor, gate color, etc."
                     rows={3}
                     className="w-full text-right bg-transparent outline-none font-body text-sm text-gray-950 placeholder:text-gray-400 resize-none"
                     onFocus={() => setFocused('pickupDetails')}
@@ -308,7 +308,7 @@ export default function SendPage() {
                   <textarea
                     value={dropoffDetails}
                     onChange={(e) => setDropoffDetails(e.target.value)}
-                    placeholder="Describe how to find this place — landmarks, building name, floor, gate color, etc."
+                    placeholder="Describe how to find this place ΓÇö landmarks, building name, floor, gate color, etc."
                     rows={3}
                     className="w-full text-right bg-transparent outline-none font-body text-sm text-gray-950 placeholder:text-gray-400 resize-none"
                     onFocus={() => setFocused('dropoffDetails')}
@@ -479,8 +479,8 @@ export default function SendPage() {
             </GroupedFormSection>
 
             <GroupedFormSection title="CONTACT">
-              <FormRow icon={<Phone className="w-4 h-4" />} label="Pickup contact" value={`${pickupContact} · ${pickupPhone}`} />
-              <FormRow icon={<Phone className="w-4 h-4" />} label="Recipient contact" value={`${dropoffContact} · ${dropoffPhone}`} />
+              <FormRow icon={<Phone className="w-4 h-4" />} label="Pickup contact" value={`${pickupContact} ┬╖ ${pickupPhone}`} />
+              <FormRow icon={<Phone className="w-4 h-4" />} label="Recipient contact" value={`${dropoffContact} ┬╖ ${dropoffPhone}`} />
             </GroupedFormSection>
 
             <Button fullWidth size="lg" className="!h-14" onClick={handleSubmit} loading={submitting}>

@@ -68,7 +68,7 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
             deliveryId: d.id,
             participantName,
             participantAvatar: null,
-            lastMessage: lastMessage || (d.pickupAddress ? `${d.pickupAddress} â†’ ${d.dropoffAddress}` : 'No messages yet'),
+            lastMessage: lastMessage || (d.pickupAddress ? `${d.pickupAddress} GåÆ ${d.dropoffAddress}` : 'No messages yet'),
             timestamp,
             unread: 0,
             online: false,

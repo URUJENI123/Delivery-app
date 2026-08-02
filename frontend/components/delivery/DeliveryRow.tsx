@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { cn } from '@/lib/utils';
 import { ProgressDotTrack } from './ProgressDotTrack';
@@ -38,8 +38,8 @@ export function DeliveryRow({ id, from, to, status, timestamp, amount, onClick }
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <span className="font-display text-xs font-semibold text-gray-950 flex-shrink-0">#{id}</span>
-            <span className="font-body text-[11px] md:text-xs text-gray-400 hidden md:inline">·</span>
-            <span className="font-body text-[11px] md:text-xs text-gray-500 truncate hidden md:block">{from} → {to}</span>
+            <span className="font-body text-[11px] md:text-xs text-gray-400 hidden md:inline">┬╖</span>
+            <span className="font-body text-[11px] md:text-xs text-gray-500 truncate hidden md:block">{from} ΓåÆ {to}</span>
           </div>
           <div className="flex flex-col mt-1 md:hidden">
             <span className="font-body text-[11px] text-gray-500 truncate">From: {from}</span>

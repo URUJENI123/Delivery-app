@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -17,7 +17,7 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell,
 } from 'recharts';
 
-// ── constants ─────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ constants ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 const NAV_ITEMS = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -51,12 +51,12 @@ const TOP_COURIERS = [
 ];
 
 const PROBLEMATIC_HUBS = [
-  { name: 'Kimironko Station B', issue: 'Wait time: +18m avg', icon: '⏱' },
-  { name: 'Nyamirambo Hub', issue: 'Congestion: High', icon: '🚦' },
-  { name: 'Gikondo Storage', issue: 'Missed Pickups: 12', icon: '📦' },
+  { name: 'Kimironko Station B', issue: 'Wait time: +18m avg', icon: 'ΓÅ▒' },
+  { name: 'Nyamirambo Hub', issue: 'Congestion: High', icon: '≡ƒÜª' },
+  { name: 'Gikondo Storage', issue: 'Missed Pickups: 12', icon: '≡ƒôª' },
 ];
 
-// ── shared sidebar ────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ shared sidebar ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
@@ -76,7 +76,7 @@ function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void })
       )}>
         <div className="h-20 flex items-center justify-center px-4 border-b border-white/10 flex-shrink-0">
           <img src="/logo.png" alt="Delivery" className="h-14 w-auto object-contain" />
-          <button onClick={onClose} className="lg:hidden ml-auto p-1 text-white/40 hover:text-white">✕</button>
+          <button onClick={onClose} className="lg:hidden ml-auto p-1 text-white/40 hover:text-white">Γ£ò</button>
         </div>
 
         <nav className="flex-1 overflow-y-auto pt-4 px-3 space-y-0.5">
@@ -134,7 +134,7 @@ function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void })
   );
 }
 
-// ── page ──────────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ page ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 export default function FleetPage() {
   const router = useRouter();
@@ -198,7 +198,7 @@ export default function FleetPage() {
 
         <div className="px-4 lg:px-6 pb-10 space-y-4 mt-5">
 
-          {/* ── ROW 1: Trends + Earnings ── */}
+          {/* ΓöÇΓöÇ ROW 1: Trends + Earnings ΓöÇΓöÇ */}
           <div className="grid lg:grid-cols-[1fr_320px] gap-4">
 
             {/* Delivery Time Trends */}
@@ -257,7 +257,7 @@ export default function FleetPage() {
             </div>
           </div>
 
-          {/* ── ROW 2: Kigali Demand Heatmap ── */}
+          {/* ΓöÇΓöÇ ROW 2: Kigali Demand Heatmap ΓöÇΓöÇ */}
           <div className="bg-[#1e0e0e] border border-white/10 rounded-xl overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
               <div>
@@ -276,7 +276,7 @@ export default function FleetPage() {
               </div>
             </div>
 
-            {/* map container — fixed pixel height so MapLibre renders */}
+            {/* map container ΓÇö fixed pixel height so MapLibre renders */}
             <div className="relative" style={{ height: 300 }}>
               <MapWidget
                 height={300}
@@ -285,7 +285,7 @@ export default function FleetPage() {
                 showCourier={false}
                 showRoute={false}
               />
-              {/* demand labels — clickable, navigate to fleet monitor */}
+              {/* demand labels ΓÇö clickable, navigate to fleet monitor */}
               <div className="absolute inset-0 pointer-events-none z-10">
                 {[
                   { label: 'KACYIRU', orders: '142 Orders/hr', top: '38%', left: '30%' },
@@ -306,7 +306,7 @@ export default function FleetPage() {
             </div>
           </div>
 
-          {/* ── ROW 3: Top Couriers + Problematic Hubs ── */}
+          {/* ΓöÇΓöÇ ROW 3: Top Couriers + Problematic Hubs ΓöÇΓöÇ */}
           <div className="grid lg:grid-cols-[1fr_320px] gap-4">
 
             {/* Top Performing Couriers */}
@@ -366,7 +366,7 @@ export default function FleetPage() {
                       <td className="px-5 py-3.5">
                         <span className="flex items-center gap-1 text-[13px] text-amber-400 font-semibold">
                           <Star size={12} className="fill-amber-400" />
-                          {c.avgRating ? Number(c.avgRating).toFixed(2) : '—'}
+                          {c.avgRating ? Number(c.avgRating).toFixed(2) : 'ΓÇö'}
                         </span>
                       </td>
                       <td className="px-5 py-3.5">

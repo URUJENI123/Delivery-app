@@ -28,8 +28,8 @@ export class DeliveryGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   async handleConnection(client: Socket) {
     const token =
-      client.handshake.auth?.token ||
-      client.handshake.headers?.authorization?.replace('Bearer ', '') ||
+      (client.handshake.auth?.token as string) ||
+      (client.handshake.headers?.authorization?.replace('Bearer ', '') as string) ||
       (client.handshake.query?.token as string);
 
     if (!token) {
@@ -39,12 +39,10 @@ export class DeliveryGateway implements OnGatewayConnection, OnGatewayDisconnect
     }
 
     try {
-      const payload = this.jwtService.verify<{ sub: string; role: string }>(token, {
-        secret: process.env.JWT_SECRET,
-      });
+      const payload = this.jwtService.verify<{ sub: string; role: string }>(token);
       client.data.userId = payload.sub;
       client.data.role = payload.role;
-      this.logger.log(`WS connected: ${client.id} (user: ${payload.sub})`);
+      this.logger.log(`Client connected: ${client.id} (user: ${payload.sub})`);
     } catch {
       this.logger.warn(`Client ${client.id} disconnected: invalid token`);
       client.disconnect();
@@ -52,13 +50,14 @@ export class DeliveryGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
 
   handleDisconnect(client: Socket) {
-    this.logger.log(`WS disconnected: ${client.id}`);
+    this.logger.log(`Client disconnected: ${client.id}`);
   }
 
   @SubscribeMessage('join:delivery')
   handleJoinDelivery(@ConnectedSocket() client: Socket, @MessageBody() deliveryId: string) {
     if (!client.data.userId) return;
     client.join(`delivery:${deliveryId}`);
+    this.logger.log(`Client ${client.id} joined delivery:${deliveryId}`);
   }
 
   @SubscribeMessage('leave:delivery')
@@ -82,8 +81,7 @@ export class DeliveryGateway implements OnGatewayConnection, OnGatewayDisconnect
   @SubscribeMessage('location:update')
   handleLocationUpdate(
     @ConnectedSocket() client: Socket,
-    @MessageBody()
-    data: { deliveryId: string; lat: number; lng: number; accuracy?: number; heading?: number; speed?: number },
+    @MessageBody() data: { deliveryId: string; lat: number; lng: number; accuracy?: number; heading?: number; speed?: number },
   ) {
     if (!client.data.userId) return;
     this.server.to(`delivery:${data.deliveryId}`).emit('courier:location', {
@@ -108,8 +106,8 @@ export class DeliveryGateway implements OnGatewayConnection, OnGatewayDisconnect
     });
   }
 
-  emitJobAvailable(courierId: string, delivery: any) {
-    this.server.to(`courier:${courierId}`).emit('job:available', { delivery });
+  emitJobAvailable(courierUserId: string, delivery: any) {
+    this.server.to(`courier:${courierUserId}`).emit('job:available', { delivery });
   }
 
   emitJobCancelled(deliveryId: string) {

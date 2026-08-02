@@ -1,5 +1,5 @@
-/**
- * DEV STUB — WebSocket is not connected in dev mode.
+﻿/**
+ * DEV STUB ΓÇö WebSocket is not connected in dev mode.
  * All socket methods are no-ops.
  * Replace with real socket.io client when integrating backend.
  */

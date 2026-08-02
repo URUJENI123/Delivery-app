@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// ── Shared Navigation Layout Constants ───────────────────────────────────────
+// ΓöÇΓöÇ Shared Navigation Layout Constants ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 const NAV_ITEMS = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -30,7 +30,7 @@ const BOTTOM_LINKS = [
   { href: '/admin/support', label: 'Help & Support', icon: HelpCircle },
 ];
 
-// ── Sidebar Component ───────────────────────────────────────────────────────
+// ΓöÇΓöÇ Sidebar Component ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
@@ -51,7 +51,7 @@ function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void })
       <div className="h-20 flex items-center justify-center px-4 border-b border-white/10 flex-shrink-0">
         <img src="/logo.png" alt="Delivery" className="h-14 w-auto object-contain" />
         <button onClick={onClose} className="lg:hidden ml-auto p-1 text-white/40 hover:text-white">
-          ✕
+          Γ£ò
         </button>
       </div>
 
@@ -138,13 +138,13 @@ function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void })
   );
 }
 
-// ── Mobile Top Bar Component ─────────────────────────────────────────────────
+// ΓöÇΓöÇ Mobile Top Bar Component ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 function AdminMobileTopBar({ onSidebarToggle }: { onSidebarToggle: () => void }) {
   return (
     <header className="lg:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-[#1a0505] border-b border-white/10 flex items-center px-4 gap-3">
       <button onClick={onSidebarToggle} className="p-1.5 text-white/60 hover:text-white -ml-1">
-        ✕
+        Γ£ò
       </button>
       <div className="flex items-center gap-2">
         <img src="/logo.png" alt="Delivery" className="h-11 w-auto object-contain" />
@@ -159,7 +159,7 @@ function AdminMobileTopBar({ onSidebarToggle }: { onSidebarToggle: () => void })
   );
 }
 
-// ── Settings Section Component ───────────────────────────────────────────────
+// ΓöÇΓöÇ Settings Section Component ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 interface SettingToggle {
   label: string;
@@ -257,7 +257,7 @@ function FieldRow({ label, value, onChange, type = 'text', placeholder, options,
   );
 }
 
-// ── Main Page Component ──────────────────────────────────────────────────────
+// ΓöÇΓöÇ Main Page Component ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 export default function AdminSettingsPage() {
   const router = useRouter();
@@ -364,7 +364,7 @@ export default function AdminSettingsPage() {
           </div>
 
           <div className="space-y-6">
-            {/* ── Platform Settings ── */}
+            {/* ΓöÇΓöÇ Platform Settings ΓöÇΓöÇ */}
             <SettingsSection icon={Globe} title="Platform" description="Basic platform identity and contact info">
               <FieldRow label="Platform Name" value={platformName} onChange={setPlatformName} placeholder="Delivery" type="text" />
               <FieldRow label="Support Email" value={supportEmail} onChange={setSupportEmail} placeholder="support@delivery.rw" type="text" />
@@ -372,7 +372,7 @@ export default function AdminSettingsPage() {
               <FieldRow label="Currency" value={defaultCurrency} onChange={setDefaultCurrency} type="select" options={['RWF', 'USD', 'KES', 'UGX']} />
             </SettingsSection>
 
-            {/* ── Notification Settings ── */}
+            {/* ΓöÇΓöÇ Notification Settings ΓöÇΓöÇ */}
             <SettingsSection icon={Bell} title="Notifications" description="Control how notifications are sent across the platform">
               <ToggleRow label="Push Notifications" description="Enable push notifications for all users" checked={notifications.pushEnabled} onChange={() => toggleNotification('pushEnabled')} />
               <ToggleRow label="SMS Alerts" description="Send SMS for critical delivery events" checked={notifications.smsEnabled} onChange={() => toggleNotification('smsEnabled')} />
@@ -382,7 +382,7 @@ export default function AdminSettingsPage() {
               <ToggleRow label="Dispute Alerts" description="Immediate notification on new disputes" checked={notifications.disputeAlerts} onChange={() => toggleNotification('disputeAlerts')} />
             </SettingsSection>
 
-            {/* ── Delivery Settings ── */}
+            {/* ΓöÇΓöÇ Delivery Settings ΓöÇΓöÇ */}
             <SettingsSection icon={Sliders} title="Delivery" description="Core delivery behavior and constraints">
               <FieldRow label="Broadcast Radius" value={broadcastRadius} onChange={setBroadcastRadius} type="number" suffix="meters" />
               <FieldRow label="Service Fee" value={serviceFee} onChange={setServiceFee} type="number" suffix="RWF" />
@@ -390,7 +390,7 @@ export default function AdminSettingsPage() {
               <FieldRow label="Max OTP Retries" value={maxRetries} onChange={setMaxRetries} type="number" />
             </SettingsSection>
 
-            {/* ── Security Settings ── */}
+            {/* ΓöÇΓöÇ Security Settings ΓöÇΓöÇ */}
             <SettingsSection icon={Shield} title="Security" description="Authentication and access control policies">
               <ToggleRow label="Require Two-Factor Auth" description="Enforce 2FA for all admin accounts" checked={security.require2fa} onChange={() => toggleSecurity('require2fa')} />
               <ToggleRow label="Session Timeout" description="Auto-logout after inactivity" checked={security.sessionTimeout} onChange={() => toggleSecurity('sessionTimeout')} />
@@ -401,7 +401,7 @@ export default function AdminSettingsPage() {
               <ToggleRow label="Audit Logging" description="Log all admin actions for compliance" checked={security.auditLog} onChange={() => toggleSecurity('auditLog')} />
             </SettingsSection>
 
-            {/* ── Payout Settings ── */}
+            {/* ΓöÇΓöÇ Payout Settings ΓöÇΓöÇ */}
             <SettingsSection icon={DollarSign} title="Payouts" description="Courier withdrawal and payout configuration">
               <FieldRow label="Minimum Withdrawal" value={minWithdrawal} onChange={setMinWithdrawal} type="number" suffix="RWF" />
               <FieldRow label="Payout Schedule" value={payoutSchedule} onChange={setPayoutSchedule} type="select" options={['Daily', 'Weekly', 'Bi-Weekly', 'Monthly']} />

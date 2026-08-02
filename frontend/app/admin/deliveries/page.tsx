@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-// ── nav ───────────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ nav ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 const NAV_ITEMS = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -30,13 +30,13 @@ const BOTTOM_LINKS = [
   { href: '/admin/support', label: 'Help & Support', icon: HelpCircle },
 ];
 
-// ── mock live feed ────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ mock live feed ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 const LIVE_ORDERS = [
-  { id: '#KGL-88219', status: 'IN_TRANSIT',   route: 'Kacyiru → Nyarutarama',      eta: '12 min' },
-  { id: '#KGL-88220', status: 'DISPATCHING',  route: 'Kigali Center → Hub A',       eta: '4 min'  },
-  { id: '#KGL-88221', status: 'DELIVERED',    route: 'Kigali Heights → Kimihurura', eta: 'Now'    },
-  { id: '#KGL-88222', status: 'IN_TRANSIT',   route: 'Gikondo → Rebero',            eta: '24 min' },
+  { id: '#KGL-88219', status: 'IN_TRANSIT',   route: 'Kacyiru ΓåÆ Nyarutarama',      eta: '12 min' },
+  { id: '#KGL-88220', status: 'DISPATCHING',  route: 'Kigali Center ΓåÆ Hub A',       eta: '4 min'  },
+  { id: '#KGL-88221', status: 'DELIVERED',    route: 'Kigali Heights ΓåÆ Kimihurura', eta: 'Now'    },
+  { id: '#KGL-88222', status: 'IN_TRANSIT',   route: 'Gikondo ΓåÆ Rebero',            eta: '24 min' },
 ];
 
 function statusStyle(s: string) {
@@ -48,7 +48,7 @@ function statusStyle(s: string) {
   }
 }
 
-// ── sidebar ───────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ sidebar ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
@@ -68,7 +68,7 @@ function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void })
       )}>
         <div className="h-20 flex items-center justify-center px-4 border-b border-white/10 flex-shrink-0">
           <img src="/logo.png" alt="Delivery" className="h-14 w-auto object-contain" />
-          <button onClick={onClose} className="lg:hidden ml-auto p-1 text-white/40 hover:text-white">✕</button>
+          <button onClick={onClose} className="lg:hidden ml-auto p-1 text-white/40 hover:text-white">Γ£ò</button>
         </div>
         <nav className="flex-1 overflow-y-auto pt-4 px-3 space-y-0.5">
           {NAV_ITEMS.map((item) => {
@@ -118,7 +118,7 @@ function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void })
   );
 }
 
-// ── page ──────────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇ page ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 export default function LogisticsPage() {
   const router = useRouter();
@@ -139,8 +139,8 @@ export default function LogisticsPage() {
     ...deliveries.slice(0, 4).map((d: any) => ({
       id: `#${d.trackingCode || d.id?.slice(0, 8)}`,
       status: d.status === 'IN_TRANSIT' ? 'IN_TRANSIT' : d.status === 'DELIVERED' ? 'DELIVERED' : 'DISPATCHING',
-      route: `${d.pickupAddress?.split(',')[0] ?? '—'} → ${d.dropoffAddress?.split(',')[0] ?? '—'}`,
-      eta: d.status === 'DELIVERED' ? 'Done' : '—',
+      route: `${d.pickupAddress?.split(',')[0] ?? 'ΓÇö'} ΓåÆ ${d.dropoffAddress?.split(',')[0] ?? 'ΓÇö'}`,
+      eta: d.status === 'DELIVERED' ? 'Done' : 'ΓÇö',
     })),
   ];
 
@@ -167,7 +167,7 @@ export default function LogisticsPage() {
             </button>
             <div>
               <h1 className="font-display text-lg font-bold text-white">Logistics</h1>
-              <p className="text-[12px] text-white/35">Live delivery operations · Kigali Metro</p>
+              <p className="text-[12px] text-white/35">Live delivery operations ┬╖ Kigali Metro</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -180,7 +180,7 @@ export default function LogisticsPage() {
 
         <div className="px-4 lg:px-6 pb-10 mt-5 space-y-4">
 
-          {/* ── KPI ROW ── */}
+          {/* ΓöÇΓöÇ KPI ROW ΓöÇΓöÇ */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
             {/* Active Orders */}
@@ -222,13 +222,13 @@ export default function LogisticsPage() {
               </div>
               <p className="font-display text-3xl font-bold text-white mt-2">RWF 4.2M</p>
               <p className="text-[11px] text-amber-400 mt-1.5 flex items-center gap-1.5">
-                <span className="text-[9px] font-bold border border-amber-600/40 bg-amber-900/30 px-1.5 py-0.5 rounded">⚡ PEAK SURGE</span>
+                <span className="text-[9px] font-bold border border-amber-600/40 bg-amber-900/30 px-1.5 py-0.5 rounded">ΓÜí PEAK SURGE</span>
                 Live updates
               </p>
             </div>
           </div>
 
-          {/* ── MIDDLE ROW: Map + Fleet Distribution ── */}
+          {/* ΓöÇΓöÇ MIDDLE ROW: Map + Fleet Distribution ΓöÇΓöÇ */}
           <div className="grid lg:grid-cols-[1fr_300px] gap-4">
 
             {/* Delivery Density map */}
@@ -236,7 +236,7 @@ export default function LogisticsPage() {
               <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
                 <div>
                   <h2 className="text-sm font-semibold text-white">Delivery Density</h2>
-                  <p className="text-[12px] text-white/35 mt-0.5">Real-time sector heat map • Kigali Metropolitan</p>
+                  <p className="text-[12px] text-white/35 mt-0.5">Real-time sector heat map ΓÇó Kigali Metropolitan</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -338,7 +338,7 @@ export default function LogisticsPage() {
             </div>
           </div>
 
-          {/* ── LIVE LOGISTICS FEED ── */}
+          {/* ΓöÇΓöÇ LIVE LOGISTICS FEED ΓöÇΓöÇ */}
           <div className="bg-[#1e0e0e] border border-white/10 rounded-xl overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
               <h2 className="text-sm font-semibold text-white">Live Logistics Feed</h2>
