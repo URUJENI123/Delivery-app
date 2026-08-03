@@ -1,15 +1,26 @@
 import { Controller, Post, Body, UseGuards } from '@nestjs/common';
-import { StorageService } from './storage.service';
-import { PresignedUrlDto } from './dto/presigned-url.dto';
-import { SupabaseAuthGuard } from '../auth/guards/supabase-auth.guard';
+import { IsIn, IsString } from 'class-validator';
+import { StorageService, ALLOWED_FOLDERS, UploadFolder } from './storage.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
+class GetSignedUploadDto {
+  @IsString()
+  @IsIn(ALLOWED_FOLDERS)
+  folder: UploadFolder;
+}
 
 @Controller('storage')
-@UseGuards(SupabaseAuthGuard)
+@UseGuards(JwtAuthGuard)
 export class StorageController {
   constructor(private readonly storageService: StorageService) {}
 
-  @Post('presigned-url')
-  async generatePresignedUrl(@Body() dto: PresignedUrlDto) {
-    return this.storageService.generatePresignedUrl(dto.fileName, dto.contentType, dto.folder);
+  /**
+   * POST /storage/signed-upload
+   * Returns a signed upload signature + URL.
+   * The client uploads directly to Cloudinary — no file bytes hit this server.
+   */
+  @Post('signed-upload')
+  getSignedUpload(@Body() dto: GetSignedUploadDto) {
+    return this.storageService.generateSignedUpload(dto.folder);
   }
 }

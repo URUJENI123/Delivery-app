@@ -9,7 +9,7 @@ import { SenderSignupDto } from './dto/sender-signup.dto';
 import { SenderSigninDto } from './dto/sender-signin.dto';
 import { AdminSigninDto } from './dto/admin-signin.dto';
 import { RequestPasswordResetDto, UpdatePasswordDto, ResendConfirmationDto } from './dto/password-reset.dto';
-import { SupabaseAuthGuard } from './guards/supabase-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Roles } from './decorators/roles.decorator';
@@ -126,7 +126,7 @@ export class AuthController {
   }
 
   @Post('password/update')
-  @UseGuards(SupabaseAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   async updatePassword(@CurrentUser() user: User, @Body() dto: UpdatePasswordDto) {
     return this.authService.updatePassword(user.id, dto.newPassword);
@@ -139,20 +139,20 @@ export class AuthController {
   }
 
   @Get('sessions')
-  @UseGuards(SupabaseAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async getSessions(@CurrentUser() user: User) {
     return this.authService.getSessions(user.id);
   }
 
   @Post('sessions/revoke-all')
-  @UseGuards(SupabaseAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   async revokeAllSessions(@CurrentUser() user: User) {
     return this.authService.revokeAllSessions(user.id);
   }
 
   @Post('logout')
-  @UseGuards(SupabaseAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie('access_token', { path: '/' });
     res.clearCookie('refresh_token', { path: '/' });
@@ -160,13 +160,13 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(SupabaseAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async getProfile(@CurrentUser() user: User) {
     return this.authService.getProfile(user.id);
   }
 
   @Patch('role')
-  @UseGuards(SupabaseAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   async updateRole(
     @CurrentUser() user: User,

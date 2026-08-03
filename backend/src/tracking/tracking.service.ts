@@ -36,6 +36,14 @@ export class TrackingService {
     return delivery;
   }
 
+  /**
+   * Recipient-side OTP confirmation via the public tracking link.
+   *
+   * This validates the OTP and marks otpVerifiedAt, but does NOT move the delivery
+   * to DELIVERED or credit the courier wallet. The courier's authenticated
+   * POST /deliveries/:id/complete endpoint is the single source of truth for
+   * completing the delivery and releasing escrow, preventing double-payment.
+   */
   async confirmDropoffOtp(token: string, otp: string) {
     const delivery = await this.prisma.delivery.findUnique({
       where: { recipientTrackingToken: token },
@@ -53,54 +61,15 @@ export class TrackingService {
     const isValid = await bcrypt.compare(otp, delivery.dropoffOtpHash);
     if (!isValid) throw new BadRequestException('Invalid OTP');
 
-    await this.stateMachine.transition(delivery.id, 'DELIVERED' as any, undefined, { otpVerified: true });
-
-    const finalPrice = delivery.agreedPriceRwf || delivery.finalPriceRwf || delivery.quotedPriceRwf || 0;
-
+    // Mark OTP as verified — courier's /complete endpoint will finalize the delivery
     await this.prisma.delivery.update({
       where: { id: delivery.id },
-      data: {
-        paymentStatus:    'RELEASED',
-        paymentReleasedAt: new Date(),
-        otpVerifiedAt:    new Date(),
-      },
+      data: { otpVerifiedAt: new Date() },
     });
-
-    // Credit courier wallet
-    if (finalPrice > 0 && delivery.courierId) {
-      const courier = await this.prisma.courier.findUnique({
-        where: { id: delivery.courierId },
-        select: { userId: true, totalDeliveries: true, totalEarnings: true },
-      });
-      if (courier) {
-        await this.walletService.creditCourier(courier.userId, finalPrice, delivery.id);
-        await this.prisma.courier.update({
-          where: { id: delivery.courierId },
-          data: {
-            totalDeliveries: { increment: 1 },
-            totalEarnings:   { increment: finalPrice },
-          },
-        });
-      }
-    }
-
-    // Notify sender
-    const sender = await this.prisma.user.findUnique({
-      where: { id: delivery.senderId },
-      select: { phone: true },
-    });
-    if (sender?.phone) {
-      try { await this.notifications.notifyDeliveryCompleted(sender.phone, 'Courier'); } catch (e) {
-        this.logger.warn(`Failed to notify sender: ${e}`);
-      }
-    }
 
     return {
-      ...delivery,
-      delivered: true,
-      finalPrice,
-      fee: SERVICE_FEE_RWF,
-      netAmount: finalPrice - SERVICE_FEE_RWF,
+      verified: true,
+      message: 'OTP confirmed. The courier will complete the delivery shortly.',
     };
   }
 }

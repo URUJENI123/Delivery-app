@@ -46,27 +46,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   setUser: (user) => set({ user, loading: false }),
 
   fetchProfile: async () => {
-    // DEV BYPASS: if a dev token is set, inject mock admin user without hitting backend
-    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-    if (token === 'dev-bypass-token') {
-      set({
-        user: {
-          id: 'admin-001',
-          supabaseId: 'sb-admin-001',
-          email: 'admin@delivery.rw',
-          fullName: 'Admin User',
-          role: 'ADMIN',
-          emailVerified: true,
-          phoneVerified: false,
-          phone: null,
-          profilePhotoUrl: null,
-          courierProfile: null,
-          onboardingSession: null,
-        },
-        loading: false,
-      });
-      return;
-    }
     try {
       const res = await api.get<any>('/auth/me');
       set({ user: res.data || res, loading: false });

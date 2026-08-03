@@ -64,7 +64,7 @@ export class AuthService {
         passwordHash,
         fullName: fullName ?? null,
         role: 'SENDER',
-        emailVerified: true, // no email confirmation flow without Supabase; set true on creation
+        emailVerified: true,
       },
     });
 
@@ -130,17 +130,11 @@ export class AuthService {
     const otpHash = await bcrypt.hash(otp, SALT_ROUNDS);
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
 
-    // Store hash on the user temporarily
-    await this.db.user.update({
-      where: { id: user.id },
-      data: { passwordHash: otpHash }, // reuse passwordHash field as otp channel
+    // Store OTP in a dedicated refresh token record (prefixed so it's identifiable).
+    // We deliberately do NOT touch passwordHash — couriers with passwords would lose them.
+    await this.db.refreshToken.deleteMany({
+      where: { userId: user.id, token: { startsWith: 'otp:' } },
     });
-
-    // In production: send SMS via NotificationsService
-    this.logger.log(`[OTP] ${phone} → ${otp}`);
-
-    // Store OTP expiry as a short-lived refresh token with expiry
-    await this.db.refreshToken.deleteMany({ where: { userId: user.id } });
     await this.db.refreshToken.create({
       data: {
         token: `otp:${otpHash}`,
@@ -149,7 +143,10 @@ export class AuthService {
       },
     });
 
-    return { exists: true, message: 'OTP sent successfully', _dev_otp: otp };
+    // In production: send SMS via NotificationsService
+    this.logger.log(`[OTP] ${phone} → ${otp}`);
+
+    return { exists: true, message: 'OTP sent successfully' };
   }
 
   async courierVerifyOtp(phone: string, otp: string) {
@@ -202,9 +199,7 @@ export class AuthService {
   // Google tokens are verified externally; we receive the decoded profile.
 
   async googleCallback(accessToken: string) {
-    // accessToken here is the Supabase/Google access token OR a pre-decoded user object
-    // With Neon stack, the frontend should POST { email, fullName, googleId, avatarUrl }
-    // We treat accessToken as googleId for lookup, and accept extra fields in body via googleAuth()
+    // Frontend should POST { email, fullName, googleId, avatarUrl } to POST /auth/google instead.
     throw new UnauthorizedException(
       'Google OAuth requires frontend to pass user profile. Use POST /auth/google instead.',
     );

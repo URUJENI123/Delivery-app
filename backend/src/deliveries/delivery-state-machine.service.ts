@@ -51,7 +51,7 @@ export class DeliveryStateMachineService {
         data: {
           deliveryId,
           userId: userId || null,
-          eventType: this.mapStatusToEvent(newStatus),
+          eventType: this.mapStatusToEvent(newStatus) as any,
           metadata: metadata ?? {},
           lat: metadata?.lat ?? null,
           lng: metadata?.lng ?? null,
@@ -72,7 +72,7 @@ export class DeliveryStateMachineService {
       PICKUP_EN_ROUTE:  EventType.COURIER_DEPARTED_PICKUP,
       ARRIVED_PICKUP:   EventType.COURIER_ARRIVED_PICKUP,
       PICKED_UP:        EventType.PACKAGE_PICKED_UP,
-      IN_TRANSIT:       EventType.PACKAGE_PICKED_UP,
+      IN_TRANSIT:       EventType.PACKAGE_IN_TRANSIT,
       ARRIVED_DROPOFF:  EventType.COURIER_ARRIVED_DROPOFF,
       DELIVERED:        EventType.DELIVERY_COMPLETED,
       CANCELLED:        EventType.DELIVERY_CANCELLED,

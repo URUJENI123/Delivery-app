@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Put, Body, Param, UseGuards } from '@nestjs/common';
 import { DeliveriesService } from './deliveries.service';
 import { CreateDeliveryDto, InterestDto, CompleteDeliveryDto, TakeJobDto, ConfirmAgreementDto, ArrivedAtPickupDto, CreateRatingDto, PayDto } from './dto/create-delivery.dto';
-import { SupabaseAuthGuard } from '../auth/guards/supabase-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -12,33 +12,33 @@ export class DeliveriesController {
   constructor(private readonly deliveriesService: DeliveriesService) {}
 
   @Post()
-  @UseGuards(SupabaseAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.SENDER)
   async create(@CurrentUser() user: User, @Body() dto: CreateDeliveryDto) {
     return this.deliveriesService.create(user.id, dto);
   }
 
   @Get()
-  @UseGuards(SupabaseAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async findAll(@CurrentUser() user: User) {
     return this.deliveriesService.findAll(user.id, user.role);
   }
 
   @Get('available')
-  @UseGuards(SupabaseAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.COURIER)
   async getAvailable(@CurrentUser() user: User) {
     return this.deliveriesService.getNearbyAvailable(user.id);
   }
 
   @Get(':id')
-  @UseGuards(SupabaseAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async findOne(@Param('id') id: string, @CurrentUser() user: User) {
     return this.deliveriesService.findOne(id, user.id);
   }
 
   @Post(':id/interest')
-  @UseGuards(SupabaseAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.COURIER)
   async expressInterest(
     @Param('id') id: string,
@@ -51,7 +51,7 @@ export class DeliveriesController {
   // NEW FLOW ENDPOINTS
 
   @Post(':id/take-job')
-  @UseGuards(SupabaseAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.COURIER)
   async takeJob(
     @Param('id') id: string,
@@ -62,7 +62,7 @@ export class DeliveriesController {
   }
 
   @Post(':id/confirm-agreement')
-  @UseGuards(SupabaseAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async confirmAgreement(
     @Param('id') id: string,
     @Body() dto: ConfirmAgreementDto,
@@ -72,7 +72,7 @@ export class DeliveriesController {
   }
 
   @Post(':id/pay')
-  @UseGuards(SupabaseAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.SENDER)
   async pay(
     @Param('id') id: string,
@@ -83,14 +83,14 @@ export class DeliveriesController {
   }
 
   @Post(':id/arrived')
-  @UseGuards(SupabaseAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.COURIER)
   async arrived(@Param('id') id: string, @CurrentUser() user: User) {
     return this.deliveriesService.courierArrived(id, user.id);
   }
 
   @Post(':id/start-delivery')
-  @UseGuards(SupabaseAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.COURIER)
   async startDelivery(
     @Param('id') id: string,
@@ -100,7 +100,7 @@ export class DeliveriesController {
   }
 
   @Post(':id/picked-up')
-  @UseGuards(SupabaseAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.COURIER)
   async pickedUp(
     @Param('id') id: string,
@@ -110,7 +110,7 @@ export class DeliveriesController {
   }
 
   @Post(':id/in-transit')
-  @UseGuards(SupabaseAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.COURIER)
   async inTransit(
     @Param('id') id: string,
@@ -120,7 +120,7 @@ export class DeliveriesController {
   }
 
   @Post(':id/arrived-pickup')
-  @UseGuards(SupabaseAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.COURIER)
   async arrivedAtPickup(
     @Param('id') id: string,
@@ -131,7 +131,7 @@ export class DeliveriesController {
   }
 
   @Post(':id/complete')
-  @UseGuards(SupabaseAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.COURIER)
   async completeDelivery(
     @Param('id') id: string,
@@ -142,7 +142,7 @@ export class DeliveriesController {
   }
 
   @Post(':id/rate')
-  @UseGuards(SupabaseAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async createRating(
     @Param('id') id: string,
     @Body() dto: CreateRatingDto,
@@ -152,7 +152,7 @@ export class DeliveriesController {
   }
 
   @Put(':id/cancel')
-  @UseGuards(SupabaseAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.SENDER)
   async cancel(@Param('id') id: string, @CurrentUser() user: User) {
     return this.deliveriesService.cancel(id, user.id);

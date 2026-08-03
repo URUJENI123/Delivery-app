@@ -12,23 +12,26 @@ export class WalletService {
       where: { userId },
       include: {
         transactions: { orderBy: { createdAt: 'desc' }, take: 50 },
+        withdrawals:  { orderBy: { createdAt: 'desc' }, take: 10 },
       },
     });
 
     if (!wallet) {
       wallet = await this.prisma.wallet.create({
         data: { userId, balance: 0 },
-        include: { transactions: true },
+        include: { transactions: true, withdrawals: true },
       });
     }
 
     return {
-      balance: wallet.balance,
+      balance:      wallet.balance,
       transactions: wallet.transactions,
+      withdrawals:  wallet.withdrawals,
     };
   }
 
   async topUp(userId: string, amount: number, method: string) {
+    if (!amount || amount <= 0) throw new BadRequestException('Invalid top-up amount');
     const wallet = await this.upsertWallet(userId);
 
     const [, transaction] = await this.prisma.$transaction([
@@ -49,27 +52,57 @@ export class WalletService {
     return transaction;
   }
 
-  async withdraw(userId: string, amount: number, method: string) {
+  /**
+   * Request a withdrawal. Debits the wallet immediately and creates a
+   * WithdrawalRequest record. Actual MoMo disbursement requires provider
+   * integration — the request sits in 'pending' status until processed.
+   */
+  async withdraw(
+    userId: string,
+    amount: number,
+    method: string,
+    provider?: string,
+    accountNumber?: string,
+  ) {
+    if (!amount || amount <= 0) throw new BadRequestException('Invalid withdrawal amount');
+
     const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
     if (!wallet) throw new NotFoundException('Wallet not found');
     if (wallet.balance < amount) throw new BadRequestException('Insufficient balance');
 
-    const [, transaction] = await this.prisma.$transaction([
+    const [, , withdrawalRequest] = await this.prisma.$transaction([
       this.prisma.wallet.update({
         where: { id: wallet.id },
         data: { balance: { decrement: amount } },
       }),
       this.prisma.walletTransaction.create({
         data: {
-          walletId: wallet.id,
-          type: 'withdrawal',
+          walletId:    wallet.id,
+          type:        'withdrawal',
           description: `Withdrawal via ${method}`,
           amount,
         },
       }),
+      this.prisma.withdrawalRequest.create({
+        data: {
+          walletId:      wallet.id,
+          userId,
+          amount,
+          method:        method || 'mobile_money',
+          provider:      provider  ?? null,
+          accountNumber: accountNumber ?? null,
+          status:        'pending',
+        },
+      }),
     ]);
 
-    return transaction;
+    return {
+      success:           true,
+      amount,
+      withdrawalRequest: withdrawalRequest.id,
+      status:            'pending',
+      message:           'Withdrawal request submitted. Funds will be disbursed shortly.',
+    };
   }
 
   async creditCourier(courierUserId: string, amount: number, deliveryId: string) {
@@ -84,22 +117,22 @@ export class WalletService {
       }),
       this.prisma.walletTransaction.create({
         data: {
-          walletId: wallet.id,
-          type: 'credit',
-          description: `Payment for delivery #${deliveryId.slice(0, 8)}`,
-          amount: netAmount,
+          walletId:      wallet.id,
+          type:          'credit',
+          description:   `Payment for delivery #${deliveryId.slice(0, 8)}`,
+          amount:        netAmount,
           referenceType: 'delivery',
-          referenceId: deliveryId,
+          referenceId:   deliveryId,
         },
       }),
       this.prisma.walletTransaction.create({
         data: {
-          walletId: wallet.id,
-          type: 'fee',
-          description: `Service fee - Delivery #${deliveryId.slice(0, 8)}`,
-          amount: fee,
+          walletId:      wallet.id,
+          type:          'fee',
+          description:   `Service fee - Delivery #${deliveryId.slice(0, 8)}`,
+          amount:        fee,
           referenceType: 'delivery',
-          referenceId: deliveryId,
+          referenceId:   deliveryId,
         },
       }),
     ]);
@@ -118,12 +151,12 @@ export class WalletService {
       }),
       this.prisma.walletTransaction.create({
         data: {
-          walletId: wallet.id,
-          type: 'debit',
-          description: `Payment held in escrow for delivery #${deliveryId.slice(0, 8)}`,
+          walletId:      wallet.id,
+          type:          'debit',
+          description:   `Payment held in escrow for delivery #${deliveryId.slice(0, 8)}`,
           amount,
           referenceType: 'delivery',
-          referenceId: deliveryId,
+          referenceId:   deliveryId,
         },
       }),
     ]);

@@ -34,27 +34,6 @@ export default function AdminAuthPage() {
     setLoading(true);
     setError('');
 
-    // DEV BYPASS: skip backend auth and inject a mock admin user
-    const mockAdminUser = {
-      id: 'dev-admin-id',
-      supabaseId: 'dev-admin-supabase-id',
-      email: email,
-      fullName: 'Admin (Dev)',
-      role: 'ADMIN' as const,
-      emailVerified: true,
-      phoneVerified: false,
-      phone: null,
-      profilePhotoUrl: null,
-      courierProfile: null,
-      onboardingSession: null,
-    };
-    localStorage.setItem('access_token', 'dev-bypass-token');
-    setUser(mockAdminUser);
-    router.replace('/admin/dashboard');
-    setLoading(false);
-    return;
-
-    /* ORIGINAL AUTH (re-enable when backend is configured):
     try {
       const data = await api.post<any>('/auth/admin/signin', { email, password });
       if (data.access_token) {
@@ -67,7 +46,6 @@ export default function AdminAuthPage() {
     } finally {
       setLoading(false);
     }
-    */
   };
 
   return (

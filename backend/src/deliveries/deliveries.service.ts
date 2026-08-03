@@ -357,10 +357,15 @@ export class DeliveriesService {
     }
 
     if (delivery.requiresRecipientOtp) {
+      // Recipient may have already verified via the public tracking link
       const freshDelivery = await this.prisma.delivery.findUnique({ where: { id: deliveryId } });
-      if (!otp) throw new BadRequestException('Recipient OTP required');
-      const isValid = await bcrypt.compare(otp, freshDelivery!.dropoffOtpHash!);
-      if (!isValid) throw new BadRequestException('Invalid drop-off OTP');
+      const alreadyVerified = !!freshDelivery!.otpVerifiedAt;
+
+      if (!alreadyVerified) {
+        if (!otp) throw new BadRequestException('Recipient OTP required');
+        const isValid = await bcrypt.compare(otp, freshDelivery!.dropoffOtpHash!);
+        if (!isValid) throw new BadRequestException('Invalid drop-off OTP');
+      }
     }
 
     const finalPrice = delivery.agreedPriceRwf || delivery.finalPriceRwf || delivery.quotedPriceRwf || 0;

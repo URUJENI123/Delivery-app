@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum UserRole {
@@ -84,6 +85,7 @@ enum EventType {
   PICKUP_OTP_SENT
   PICKUP_OTP_CONFIRMED
   PACKAGE_PICKED_UP
+  PACKAGE_IN_TRANSIT
   LOCATION_UPDATE
   COURIER_ARRIVED_DROPOFF
   DROPOFF_OTP_SENT

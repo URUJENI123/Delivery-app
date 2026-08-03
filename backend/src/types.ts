@@ -75,6 +75,7 @@ export enum EventType {
   PICKUP_OTP_SENT = 'PICKUP_OTP_SENT',
   PICKUP_OTP_CONFIRMED = 'PICKUP_OTP_CONFIRMED',
   PACKAGE_PICKED_UP = 'PACKAGE_PICKED_UP',
+  PACKAGE_IN_TRANSIT = 'PACKAGE_IN_TRANSIT',
   LOCATION_UPDATE = 'LOCATION_UPDATE',
   COURIER_ARRIVED_DROPOFF = 'COURIER_ARRIVED_DROPOFF',
   DROPOFF_OTP_SENT = 'DROPOFF_OTP_SENT',
@@ -88,7 +89,6 @@ export enum EventType {
 
 export interface User {
   id: string;
-  supabaseId: string;
   email?: string;
   phone?: string;
   fullName?: string;
