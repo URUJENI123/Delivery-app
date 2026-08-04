@@ -37,6 +37,24 @@ export async function adminSignin(req: Request, res: Response, next: NextFunctio
   } catch (err) { next(err); }
 }
 
+export async function courierSignup(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { email, password, fullName, phone } = req.body;
+    const result = await authService.courierSignup(email, password, fullName, phone);
+    setAuthCookies(res, result.accessToken, result.refreshToken);
+    res.status(201).json(result);
+  } catch (err) { next(err); }
+}
+
+export async function courierSignin(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { email, password } = req.body;
+    const result = await authService.courierSignin(email, password);
+    setAuthCookies(res, result.accessToken, result.refreshToken);
+    res.json(result);
+  } catch (err) { next(err); }
+}
+
 export async function checkCourierPhone(req: Request, res: Response, next: NextFunction) {
   try {
     res.json(await authService.checkCourierPhone(req.body.phone));

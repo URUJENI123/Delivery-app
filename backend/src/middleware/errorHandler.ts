@@ -27,11 +27,20 @@ export function errorHandler(
     });
   }
 
-  // Unknown errors
+  // Unknown / unexpected errors — expose what we actually know
+  const isDev = process.env.NODE_ENV !== 'production';
+  const isError = err instanceof Error;
+  const errorName  = isError ? err.name    : 'UnknownError';
+  const errorMsg   = isError ? err.message : String(err);
+  const errorStack = isError ? err.stack   : undefined;
+
   console.error('[Unhandled Error]', err);
+
   return res.status(500).json({
     statusCode: 500,
-    error: 'InternalServerError',
-    message: 'An unexpected error occurred',
+    error: errorName,
+    message: errorMsg,
+    // Full stack trace in dev; omitted in production
+    ...(isDev && { stack: errorStack }),
   });
 }
