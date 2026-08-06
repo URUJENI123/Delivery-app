@@ -160,6 +160,11 @@ async function mockRequest<T>(method: string, path: string, _body?: unknown): Pr
   if (path === '/admin/couriers') return MOCK_COURIERS as T;
   if (path === '/admin/users') return MOCK_USERS as T;
   if (path === '/admin/deliveries') return MOCK_DELIVERIES as T;
+  if (path === '/admin/revenue') return { balance: 485000, totalFees: 485000, configured: true } as T;
+  if (path === '/admin/revenue/withdraw') return {
+    success: true,
+    message: 'Withdrawal initiated — RWF paid to your MoMo number shortly.',
+  } as T;
   if (path === '/admin/disputes') return [
     { id: 'disp-001', deliveryId: 'del-003', delivery: { trackingCode: 'DLV-2025-003' }, reason: 'Package arrived damaged', status: 'OPEN', createdAt: new Date(Date.now() - 43200_000).toISOString() },
   ] as T;

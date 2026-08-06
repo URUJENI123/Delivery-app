@@ -9,6 +9,7 @@ import {
   CheckCircle, AlertTriangle, ChevronRight,
   TrendingUp, Shield, LogOut, LayoutDashboard,
   Users, BarChart2, UserCheck, Menu, Bell, Settings, HelpCircle,
+  Wallet, ArrowUpRight, X, Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -203,10 +204,15 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const [dashData, setDashData] = useState<any>(null);
   const [couriers, setCouriers] = useState<any[]>([]);
+  const [revenue, setRevenue] = useState<any>({ balance: 0, totalFees: 0, configured: true });
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tick, setTick] = useState(0);
   const tickRef = useRef(0);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [withdrawForm, setWithdrawForm] = useState({ amount: '', phoneNumber: '', provider: 'MTN' });
+  const [withdrawStatus, setWithdrawStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [withdrawMsg, setWithdrawMsg] = useState('');
 
   useEffect(() => {
     const t = setInterval(() => { tickRef.current++; setTick(tickRef.current); }, 30_000);
@@ -216,12 +222,14 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [dashboard, c] = await Promise.all([
+        const [dashboard, c, rev] = await Promise.all([
           api.get<any>('/admin/dashboard'),
           api.get<any>('/admin/couriers'),
+          api.get<any>('/admin/revenue'),
         ]);
         setDashData(dashboard);
         setCouriers(Array.isArray(c) ? c : c.data || []);
+        setRevenue(rev || { balance: 0, totalFees: 0, configured: true });
       } catch (e) {
         console.error('Failed to load admin dashboard', e);
       } finally {
@@ -230,6 +238,32 @@ export default function AdminDashboardPage() {
     }
     load();
   }, []);
+
+  async function handleWithdraw() {
+    setWithdrawStatus('submitting');
+    setWithdrawMsg('');
+    try {
+      const res = await api.post<any>('/admin/revenue/withdraw', {
+        amount: Number(withdrawForm.amount),
+        phoneNumber: withdrawForm.phoneNumber,
+        provider: withdrawForm.provider,
+      });
+      setWithdrawStatus('success');
+      setWithdrawMsg(res?.message || 'Withdrawal initiated successfully.');
+      const rev = await api.get<any>('/admin/revenue');
+      setRevenue(rev || { balance: 0, totalFees: 0, configured: true });
+    } catch (e: any) {
+      setWithdrawStatus('error');
+      setWithdrawMsg(e?.message || 'Withdrawal failed. Please try again.');
+    }
+  }
+
+  function openWithdrawModal() {
+    setWithdrawForm({ amount: String(revenue?.balance ?? ''), phoneNumber: '', provider: 'MTN' });
+    setWithdrawStatus('idle');
+    setWithdrawMsg('');
+    setWithdrawOpen(true);
+  }
 
   const s = dashData;
   const pendingCount = couriers.filter((c: any) => !c.isApprovedByAdmin).length;
@@ -320,6 +354,33 @@ export default function AdminDashboardPage() {
                 </div>
               );
             })}
+          </div>
+
+          {/* ΓöÇΓöÇ PLATFORM REVENUE ΓöÇΓöÇ */}
+          <div className="mt-4 bg-gradient-to-r from-[#1e0e0e] to-[#2a0a0a] border border-white/10 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-red-900/50 border border-red-700/40 flex items-center justify-center flex-shrink-0">
+              <Wallet size={20} className="text-red-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] text-white/40 uppercase tracking-wider">Platform Revenue Wallet</p>
+              <div className="flex items-baseline gap-3 mt-0.5 flex-wrap">
+                <p className="font-display text-2xl font-bold text-white">
+                  RWF {Number(revenue?.balance ?? 0).toLocaleString()}
+                </p>
+                <p className="text-[12px] text-white/35">Total service fees earned: RWF {Number(revenue?.totalFees ?? 0).toLocaleString()}</p>
+              </div>
+              {revenue?.configured === false && (
+                <p className="text-[11px] text-orange-400 mt-1">Platform wallet not configured — set PLATFORM_WALLET_USER_ID in backend/.env and run prisma:seed.</p>
+              )}
+            </div>
+            <button
+              onClick={openWithdrawModal}
+              disabled={Number(revenue?.balance ?? 0) <= 0}
+              className="flex-shrink-0 h-10 px-4 bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[13px] font-semibold rounded-lg transition-colors flex items-center gap-1.5"
+            >
+              <ArrowUpRight size={15} />
+              Withdraw Service Fee
+            </button>
           </div>
 
           {/* ΓöÇΓöÇ MAIN GRID ΓöÇΓöÇ */}
@@ -477,6 +538,111 @@ export default function AdminDashboardPage() {
 
         </div>
       </div>
+
+      {/* ΓöÇΓöÇ WITHDRAW MODAL ΓöÇΓöÇ */}
+      {withdrawOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setWithdrawOpen(false)}>
+          <div
+            className="w-full max-w-md bg-[#1e0e0e] border border-white/10 rounded-2xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+              <div>
+                <h2 className="font-display text-base font-bold text-white">Withdraw Service Fee</h2>
+                <p className="text-[12px] text-white/35 mt-0.5">Funds are sent via MTN MoMo or Airtel Money</p>
+              </div>
+              <button onClick={() => setWithdrawOpen(false)} className="p-1.5 text-white/40 hover:text-white transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="bg-[#120808] border border-white/10 rounded-xl px-4 py-3 flex items-center justify-between">
+                <span className="text-[12px] text-white/45">Available balance</span>
+                <span className="font-display text-lg font-bold text-white">RWF {Number(revenue?.balance ?? 0).toLocaleString()}</span>
+              </div>
+
+              <div>
+                <label className="block text-[12px] text-white/50 mb-1.5">Amount (RWF)</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={withdrawForm.amount}
+                  onChange={(e) => setWithdrawForm((f) => ({ ...f, amount: e.target.value }))}
+                  placeholder="e.g. 100000"
+                  className="w-full h-11 px-3 bg-[#120808] border border-white/15 rounded-lg text-white text-sm focus:outline-none focus:border-red-500 transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[12px] text-white/50 mb-1.5">MoMo Phone Number</label>
+                <input
+                  type="tel"
+                  value={withdrawForm.phoneNumber}
+                  onChange={(e) => setWithdrawForm((f) => ({ ...f, phoneNumber: e.target.value }))}
+                  placeholder="078 000 0000 or 072 000 0000"
+                  className="w-full h-11 px-3 bg-[#120808] border border-white/15 rounded-lg text-white text-sm focus:outline-none focus:border-red-500 transition-colors"
+                />
+                <p className="text-[11px] text-white/30 mt-1">07xx = MTN MoMo · 072x/073x = Airtel Money (auto-detected)</p>
+              </div>
+
+              <div>
+                <label className="block text-[12px] text-white/50 mb-1.5">Provider</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {['MTN', 'Airtel'].map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setWithdrawForm((f) => ({ ...f, provider: p }))}
+                      className={cn(
+                        'h-10 rounded-lg text-[13px] font-semibold border transition-colors',
+                        withdrawForm.provider === p
+                          ? 'bg-red-600/20 border-red-600/60 text-red-300'
+                          : 'bg-[#120808] border-white/15 text-white/45 hover:border-white/30',
+                      )}
+                    >
+                      {p === 'MTN' ? 'MTN MoMo' : 'Airtel Money'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {withdrawStatus === 'success' && (
+                <div className="flex items-start gap-2 bg-green-950/50 border border-green-700/40 rounded-lg px-3 py-2.5">
+                  <CheckCircle size={15} className="text-green-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-[12px] text-green-300">{withdrawMsg}</p>
+                </div>
+              )}
+              {withdrawStatus === 'error' && (
+                <div className="flex items-start gap-2 bg-red-950/50 border border-red-700/40 rounded-lg px-3 py-2.5">
+                  <AlertTriangle size={15} className="text-red-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-[12px] text-red-300">{withdrawMsg}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={() => setWithdrawOpen(false)}
+                  className="flex-1 h-11 border border-white/15 hover:bg-white/5 text-white/60 text-[13px] font-semibold rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleWithdraw}
+                  disabled={withdrawStatus === 'submitting' || !withdrawForm.amount || Number(withdrawForm.amount) <= 0 || !withdrawForm.phoneNumber}
+                  className="flex-1 h-11 bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[13px] font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  {withdrawStatus === 'submitting' ? (
+                    <><Loader2 size={15} className="animate-spin" /> Processing…</>
+                  ) : (
+                    <><ArrowUpRight size={15} /> Withdraw</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

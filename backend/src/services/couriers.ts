@@ -18,9 +18,25 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+const COURIER_CREATE_FIELDS = [
+  'nationalIdNumber', 'motorcyclePlate', 'associationCode', 'jacketSerialNumber',
+  'operatingZone', 'selfieUrl', 'idPhotoUrl', 'vehiclePhotoFrontUrl',
+  'vehiclePhotoRearUrl', 'licensePhotoUrl', 'jacketPhotoUrl',
+  'emergencyContactName', 'emergencyContactPhone', 'momoNumber', 'momoProvider',
+] as const;
+
 export async function register(userId: string, dto: Record<string, unknown>) {
-  await userRepo.update(userId, { role: UserRole.COURIER });
-  return courierRepo.upsert(userId, dto as any, {});
+  const { fullName, phone, ...rest } = dto;
+  await userRepo.update(userId, {
+    role: UserRole.COURIER,
+    ...(typeof fullName === 'string' ? { fullName } : {}),
+    ...(typeof phone === 'string' ? { phone } : {}),
+  });
+  const courierData: Record<string, unknown> = {};
+  for (const key of COURIER_CREATE_FIELDS) {
+    if (rest[key] !== undefined) courierData[key] = rest[key];
+  }
+  return courierRepo.upsert(userId, courierData as any, {});
 }
 
 // ─── Onboarding ───────────────────────────────────────────────────────────────
