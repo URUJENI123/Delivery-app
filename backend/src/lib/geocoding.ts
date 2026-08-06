@@ -5,11 +5,16 @@
  * For production consider a paid provider (Google Maps, Mapbox, HERE) for
  * better rate limits and Rwanda-specific accuracy.
  *
- * Nominatim usage policy: max 1 req/second, must set a descriptive User-Agent.
+ * Nominatim usage policy: max 1 req/second, must set a descriptive User-Agent
+ * identifying the app. Configure via NOMINATIM_BASE_URL / NOMINATIM_EMAIL /
+ * NOMINATIM_USER_AGENT in backend/.env (see .env.example).
  */
 
-const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org';
-const USER_AGENT     = 'DeliveryApp/1.0 (kigali-moto-delivery)';
+const NOMINATIM_BASE = process.env.NOMINATIM_BASE_URL || 'https://nominatim.openstreetmap.org';
+
+const APP_IDENTITY = 'DeliveryApp/1.0 (kigali-moto-delivery';
+const CONTACT      = process.env.NOMINATIM_EMAIL ? `; contact: ${process.env.NOMINATIM_EMAIL}` : '';
+const USER_AGENT   = process.env.NOMINATIM_USER_AGENT || `${APP_IDENTITY}${CONTACT})`;
 
 // ─── Kigali bounding box ──────────────────────────────────────────────────────
 // Covers all 3 districts (Nyarugenge · Kicukiro · Gasabo) with a small buffer.

@@ -13,6 +13,7 @@ import cors from 'cors';
 import { errorHandler } from './middleware/errorHandler';
 import { DeliveryGateway } from './lib/socket';
 import { createLimiter } from './lib/rateLimit';
+import { setupSwagger } from './lib/swagger';
 import { getRedis, isRedisEnabled } from './lib/redis';
 import { setGateway as setDeliveriesGateway } from './services/deliveries';
 import { setGateway as setChatGateway } from './services/chat';
@@ -106,6 +107,21 @@ export async function createAppServer(): Promise<{ app: express.Express; httpSer
 
   // ─── Health check ─────────────────────────────────────────────────────────
   app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+
+  // ─── Swagger / OpenAPI docs ────────────────────────────────────────────────
+  setupSwagger(app, {
+    '/api/v1/auth':        authRoutes,
+    '/api/v1/deliveries':  deliveryRoutes,
+    '/api/v1/couriers':    courierRoutes,
+    '/api/v1/admin':       adminRoutes,
+    '/api/v1/wallet':      walletRoutes,
+    '/api/v1/sender':      senderRoutes,
+    '/api/v1/storage':     storageRoutes,
+    '/api/v1/track':       trackingRoutes,
+    '/api/v1/users':       userRoutes,
+    '/api/v1/chat':        chatRoutes,
+    '/api/v1/geocode':     geocodingRoutes,
+  });
 
   // ─── Error handler (must be last) ─────────────────────────────────────────
   app.use(errorHandler);

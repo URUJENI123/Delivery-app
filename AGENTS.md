@@ -93,6 +93,16 @@ routes/ (Zod validation) → controllers/ (req/res) → services/ (logic) → re
 | `src/lib/redis.ts` | Lazy ioredis client — no-op (returns null) when `REDIS_URL` unset |
 | `src/lib/cache.ts` | `cacheGet/cacheSet/cacheDel/cacheDelByPrefix/withCache` — Redis, in-memory fallback |
 | `src/lib/rateLimit.ts` | `createLimiter(preset)` — presets: global, auth, public, payment, admin |
+| `src/lib/swagger.ts` | `setupSwagger(app, routers)` — auto-generates OpenAPI 3.0 docs from mounted routers + curated schemas |
+
+## Swagger / OpenAPI Docs
+
+- **UI**: `GET /api-docs` (Swagger UI) · **raw spec**: `GET /api-docs.json`
+- Generated at boot from the mounted Express routers in `server.ts` — every route appears automatically, so docs can't drift from routes
+- Per-endpoint summaries, request bodies, response schemas, tags and security are curated in `META` inside `src/lib/swagger.ts` (add new endpoints' metadata there; untagged routes still show up with a generic summary)
+- `POST /api-docs` and `/api-docs.json` are NOT documented themselves — they mount the UI
+- Auth is documented as a `bearerAuth` security scheme; the `access_token` httpOnly cookie is also accepted
+- Verify after adding routes: `npm run build` then hit `/api-docs.json` and check the path count
 
 **Key services**:
 | File | Purpose |
@@ -157,6 +167,9 @@ Keying: `payment`/`admin`/`auth` key by authenticated user id when available, el
 | `REFRESH_TOKEN_EXPIRES_IN` | `30d` |
 | `CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET` | File uploads |
 | `AFRICASTALKING_USERNAME/API_KEY` | SMS — stub, not wired |
+| `NOMINATIM_BASE_URL` | Nominatim endpoint (default `https://nominatim.openstreetmap.org`) |
+| `NOMINATIM_EMAIL` | Contact email appended to the Nominatim User-Agent (usage-policy requirement) |
+| `NOMINATIM_USER_AGENT` | Full User-Agent override (default built from app name + email) |
 | `PORT` | `3001` |
 | `FRONTEND_URL` | CORS origin (`http://localhost:3000`) |
 | `NODE_ENV` | `development` / `production` |
@@ -489,6 +502,7 @@ All under `/admin`, all require ADMIN role.
 `POST /admin/revenue/withdraw`
 `PUT /admin/couriers/:id/verify` · `/couriers/:id/suspend` · `/refunds/:id/approve` · `/refunds/:id/reject` · `/disputes/:id`
 `GET /health`
+`GET /api-docs` (Swagger UI) · `GET /api-docs.json` (raw OpenAPI spec)
 
 ---
 

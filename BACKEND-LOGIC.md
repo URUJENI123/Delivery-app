@@ -21,7 +21,8 @@
 12. [File Storage (Cloudinary)](#12-file-storage-cloudinary)
 13. [State Machine & Event Log](#13-state-machine--event-log)
 14. [Error Handling](#14-error-handling)
-15. [Environment Configuration](#15-environment-configuration)
+15. [Swagger / OpenAPI Documentation](#15-swagger--openapi-documentation)
+16. [Environment Configuration](#16-environment-configuration)
 
 ---
 
@@ -1586,7 +1587,51 @@ Or with field details for validation errors:
 
 ---
 
-## 15. Environment Configuration
+## 15. Swagger / OpenAPI Documentation
+
+### Endpoints
+
+| URL | Purpose |
+|-----|---------|
+| `GET /api-docs` | Interactive Swagger UI (swagger-ui-express) |
+| `GET /api-docs.json` | Raw OpenAPI 3.0.3 document (JSON) |
+
+### How it's generated (`src/lib/swagger.ts`)
+
+The spec is built **at boot time** in `setupSwagger(app, routers)`:
+
+1. **Route enumeration** — the mounted Express routers (passed from `server.ts`)
+   are introspected (`router.stack` → `layer.route.path` + methods). Every route
+   automatically appears in the docs, including ones with no hand-written metadata,
+   so the docs can't drift from the routes.
+   - `:param` style paths are converted to OpenAPI `{param}`.
+   - A trailing `/` is normalized away so metadata keys match.
+2. **Curated metadata** — a `META` map (`'METHOD /path'` → `OpMeta`) adds
+   human-readable summaries, descriptions, tags, request bodies (schema refs),
+   response schemas, response status codes, and query parameters for every endpoint.
+3. **Fallbacks** — endpoints without a `META` entry get a generic summary
+   (`Retrieve <resource>` / `Create / action on <resource>`), an inferred tag
+   from the path prefix, and a standard 200 response.
+
+### Components
+
+- `bearerAuth` security scheme (HTTP bearer, JWT). The `access_token` httpOnly
+  cookie is also accepted by `authenticate`, though it is not modelled in the spec.
+- Global `security: [{ bearerAuth: [] }]`; **public** endpoints (auth signin/signup/OTP,
+  tracking, webhook, geocode/bounds, health) override it with `security: []`.
+- ~90 shared schemas under `components.schemas`: `User`, `Courier`, `Delivery`,
+  `Wallet`, `RefundRequest`, `Dispute`, `AuthResponse`, all input DTOs, etc.
+
+### Adding a new endpoint
+
+1. Define the route in `routes/` as usual — it shows up in the docs automatically.
+2. Add a `META` entry in `src/lib/swagger.ts` for a nice summary + request/response schemas.
+3. Add any new component schemas to the `schemas` object.
+4. Verify: `npm run build`, boot the server, check `GET /api-docs.json` path count.
+
+---
+
+## 16. Environment Configuration
 
 All environment variables live in `backend/.env`. A template is at `backend/.env.example`.
 
