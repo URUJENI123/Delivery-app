@@ -34,6 +34,13 @@ export class DeliveryGateway {
       socket.on('leave:delivery', (id: string) => socket.leave(`delivery:${id}`));
       socket.on('join:courier', (id: string) => socket.join(`courier:${id}`));
       socket.on('leave:courier', (id: string) => socket.leave(`courier:${id}`));
+      socket.on('join:user', (id: string) => socket.join(`user:${id}`));
+      socket.on('leave:user', (id: string) => socket.leave(`user:${id}`));
+
+      // Admins auto-join the 'admins' room to receive platform-wide events
+      if (socket.data.role === 'ADMIN') {
+        socket.join('admins');
+      }
 
       socket.on(
         'location:update',
@@ -79,7 +86,15 @@ export class DeliveryGateway {
 
   /** Notify a specific user regardless of which delivery room they're in */
   emitToUser(userId: string, event: string, data: unknown) {
+    // Emit to both the legacy courier room and the generic user room so any
+    // client (sender, courier or admin) can receive per-user events.
     this.io.to(`courier:${userId}`).emit(event, data);
+    this.io.to(`user:${userId}`).emit(event, data);
+  }
+
+  /** Broadcast an event to all connected admin sockets */
+  emitToAdmins(event: string, data: unknown) {
+    this.io.to('admins').emit(event, data);
   }
 
   /** Notify sender that broadcast is live */

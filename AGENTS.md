@@ -1,323 +1,529 @@
-# DELIVERY — Agent Notes
+# DELIVERY APP — Agent Notes (Full Project Reference)
+
+> Motorcycle delivery platform serving 3 districts in Kigali, Rwanda:
+> **Nyarugenge · Kicukiro · Gasabo**
+>
+> See `BACKEND-LOGIC.md` for deep-dive technical documentation on every service.
+
+---
 
 ## Project Structure
-- `/backend` — Express + TypeScript API. Prisma ORM on Neon PostgreSQL. Zod validation, Socket.IO, JWT auth
-- `/frontend` — Next.js 16 App Router web app (Zustand + Tailwind + Socket.IO). **Currently runs in DEV MOCK mode**
-- `/mobile` — React Native (Expo ~54) app for couriers/senders
-- See also `APP-LOGIC.md` and `MOBILE_APP_DOCUMENTATION.md` at repo root
 
-## Database
-- **Neon PostgreSQL** — database `neondb`, schema `public`
-- **Prisma ORM** — schema in `backend/prisma/schema.prisma`; client singleton in `backend/src/lib/prisma.ts`
-- Connection strings live in `backend/.env`:
-  - `DATABASE_URL` — pooled connection (port **6543**), used at runtime
-  - `DIRECT_URL` — direct connection (port **5432**), required for `prisma migrate`
-- Migrations: `npx prisma migrate dev` (dev) / `npm run prisma:migrate` (deploy)
-- **Troubleshooting P1001**: server is usually reachable — the error most often means wrong Neon credentials. Test with `psql`/`pg`; "password authentication failed" → update `DATABASE_URL`/`DIRECT_URL` from the Neon dashboard (Connection Details)
+```
+Delivery-app/
+  backend/          Express + TypeScript API (Prisma, Socket.IO, JWT, Zod)
+  frontend/         Next.js 16 App Router web app (DEV MOCK mode)
+  mobile/           React Native (Expo ~54) — couriers + senders
+  AGENTS.md         This file
+  BACKEND-LOGIC.md  Full backend logic documentation
+  Delivery-App.postman_collection.json  — 110 requests, 14 folders
+```
+
+---
 
 ## Build Commands
 
 ### Backend
-```
+```bash
 cd backend
 npm install
-npm run dev                # ts-node-dev on :3001
-npm run build              # tsc → dist/
-npm run start              # node dist/index.js
+npm run dev                  # ts-node-dev on :3001
+npm run build                # tsc → dist/
+npm run start                # node dist/index.js
 npm run prisma:generate
-npm run prisma:migrate     # prisma migrate deploy
-npm run prisma:push        # prisma db push
+npm run prisma:migrate       # prisma migrate deploy
+npm run prisma:push          # prisma db push
+npm run prisma:seed          # create admin + platform wallet user
 npm run prisma:studio
 ```
 
 ### Frontend
-```
+```bash
 cd frontend
 npm install
-npm run dev                # Next dev on :3000
+npm run dev                  # Next dev on :3000
 npm run build
 npm run lint
 ```
 
 ### Mobile
-```
+```bash
 cd mobile
 npm install
-npm run start              # expo start
+npm run start                # expo start
 npm run android | ios | web
 ```
 
+---
+
+## Database
+
+- **Neon PostgreSQL** — serverless, database `delivery`, schema `public`
+- **Prisma ORM** — schema at `backend/prisma/schema.prisma`
+- `DATABASE_URL` — pooled connection (port **6543**), used at runtime
+- `DIRECT_URL` — direct connection (port **5432**), required for `prisma migrate`
+- Run `npm run prisma:seed` after first deploy — creates the admin user and platform wallet user, prints `PLATFORM_WALLET_USER_ID` to paste into `.env`
+
+---
+
 ## Backend Architecture
-- **Entry**: `backend/src/index.ts` — Express + `http.createServer` + Socket.IO (`path: '/ws'`). All routes mounted under **`/api/v1`**. Rate limit 100 req/min. Health check at `GET /health`
-- **Layering**: `routes/` (zod schemas) → `controllers/` (request/response) → `services/` (business logic) → `repositories/` (Prisma queries)
-- **Validation**: `validateBody` / `validateQuery` from `backend/src/middleware/validate.ts`
-- **Auth middleware**: `authenticate` (Bearer JWT or `access_token` cookie) + `requireRole(...roles)` in `backend/src/middleware/auth.ts`
-- **Errors**: custom `ApiError` classes in `backend/src/lib/errors.ts`; handler in `backend/src/middleware/errorHandler.ts`
-- **JWT**: `backend/src/lib/jwt.ts` (jsonwebtoken). Payload `{ sub, role }`, 1h expiry (`JWT_EXPIRES_IN`)
-- **Refresh tokens**: stored in `refresh_tokens` table, 30-day TTL, rotated on every use
-- **Auth responses**: signin/signup/verify return `{ accessToken, refreshToken, user }` **and** set httpOnly cookies `access_token` (1h) + `refresh_token` (30d)
-- **Socket.IO**: `backend/src/lib/socket.ts` — `DeliveryGateway` class, JWT verified on connect via handshake auth
-- **Uploads**: Cloudinary signed uploads via `backend/src/lib/cloudinary.ts`; `POST /storage/signed-upload` returns `{ uploadUrl, publicUrl }`
-- **Notifications**: `backend/src/services/notifications.ts` — **stub**, logs to console only
 
-## Environment (backend/.env)
-| Var | Purpose |
-|-----|---------|
-| `DATABASE_URL` / `DIRECT_URL` | Neon connection strings |
-| `JWT_SECRET` / `JWT_EXPIRES_IN` / `REFRESH_TOKEN_EXPIRES_IN` | Token config |
-| `CLOUDINARY_*` | File uploads (cloud name, key, secret) |
-| `AFRICASTALKING_*` | SMS placeholder (not yet wired) |
-| `PORT` / `FRONTEND_URL` / `NODE_ENV` | Server config |
-| `OTP_EXPIRY_MINUTES`, `BROADCAST_RADIUS_KM`, `BROADCAST_WINDOW_SECONDS`, `COURIER_CONFIRM_TIMEOUT_SECONDS` | Delivery tuning |
+**Entry point**: `backend/src/index.ts`
+- Express + `http.createServer` + Socket.IO (`path: '/ws'`)
+- All routes under `/api/v1` · Rate limit: 100 req/min · Health: `GET /health`
 
-## Frontend Mock Mode
-- `frontend/.env` has `NEXT_PUBLIC_DEV_MOCK=true` — **all API calls are mocked** by `frontend/lib/api.ts`; `frontend/lib/supabase.ts` is a placeholder; `frontend/proxy.ts` skips all auth middleware
-- No backend/Supabase needed to run the web app locally
-- To restore real integration: set `NEXT_PUBLIC_DEV_MOCK=false` and swap `lib/api.ts` for a real fetch client (API base: `NEXT_PUBLIC_API_URL`, default `http://localhost:3001/api/v1`)
-- Note: onboarding page calls `/storage/presigned-url` while backend route is `/storage/signed-upload` — frontend currently ignores it (mock mode)
-
-## Auth Flows
-### Entry Points
-- **/auth/sender/signin** — sender email/password (redirects by role)
-- **/auth/sender/signup** — sender email/password signup
-- **/auth/courier** — courier phone entry → `POST /auth/courier/request-otp` → `/auth/courier/verify?phone=...&mode=signup|signin`
-- **/auth/courier/verify** — OTP entry → `POST /auth/courier/verify-otp`. `mode=signup` → onboarding; otherwise onboarding (if incomplete) / `/auth/courier/pending` (not approved) / `/courier/dashboard`
-- **/auth/courier/onboarding** — single page (personal info → credentials → documents) + terms + submit → `/auth/courier/pending`
-- **/auth/courier/pending** — awaiting admin approval
-- **/auth/signin** and **/admin/auth** — admin signin (`POST /auth/admin/signin`, role-checked)
-- **/auth** → redirects to `/auth/signin`
-
-### Courier Flow (Simplified)
-1. `/auth/courier` → enter phone → request OTP
-2. `/auth/courier/verify` → enter 6-digit OTP
-3. `/auth/courier/onboarding` (if new / not submitted) → submit → `/auth/courier/pending`
-4. Admin approves (`PUT /admin/couriers/:id/verify`) → courier signs in → `/courier/dashboard`
-
-## Auth Endpoints (Backend)
-- POST /auth/sender/signup       — email + password (≥6 chars) + optional fullName
-- POST /auth/sender/signin       — email + password
-- POST /auth/admin/signin        — email + password, ADMIN role required
-- POST /auth/courier/check-phone — `{ phone }` → `{ exists }`
-- POST /auth/courier/request-otp — `{ phone }`; auto-creates a COURIER user if new; logs OTP to console (stub)
-- POST /auth/courier/verify-otp  — `{ phone, token }`; returns `needsOnboarding`
-- POST /auth/google              — `{ email, fullName?, googleId?, avatarUrl? }` (upserts SENDER)
-- POST /auth/refresh             — rotates refresh token (`refresh_token` body or cookie)
-- GET  /auth/me                  — profile (protected)
-- POST /auth/logout              — clears cookies (protected)
-- PATCH /auth/role               — `{ userId, role }` (protected)
-- POST /auth/password/reset      — stub (logs only)
-- POST /auth/password/update     — `{ newPassword }` (protected)
-- GET  /auth/sessions            — active sessions (protected)
-- POST /auth/sessions/revoke-all — revoke all (protected)
-
-## Courier Onboarding Endpoints
-- POST /couriers/register
-- POST /couriers/onboarding/start   — `{ fullName?, phone? }`
-- PUT  /couriers/onboarding/step    — partial save
-- GET  /couriers/onboarding/status
-- POST /couriers/onboarding/submit  — `{ agreeToTerms: true }`
-- GET  /couriers/me                 — courier profile (COURIER)
-- PUT  /couriers/me                 — update profile (COURIER)
-- PUT  /couriers/me/online          — `{ isOnline, lat?, lng? }` toggle availability
-- PUT  /couriers/me/location        — `{ lat, lng, accuracy?, heading?, speed? }` GPS update
-- GET  /couriers/me/jobs            — courier's jobs (COURIER)
-- GET  /couriers/me/earnings        — earnings (COURIER)
-- GET  /couriers/dashboard          — dashboard stats (COURIER)
-- GET  /couriers/nearby             — `{ lat, lng, radius? }` (ADMIN)
-
-## Delivery Flow (Full Lifecycle)
-
-### Statuses
+**Layering**:
 ```
-DRAFT → BROADCAST → COURIER_ASSIGNED → COURIER_CONFIRMED → PICKUP_EN_ROUTE → ARRIVED_PICKUP → PICKED_UP → IN_TRANSIT → ARRIVED_DROPOFF → DELIVERED
+routes/ (Zod validation) → controllers/ (req/res) → services/ (logic) → repositories/ (Prisma)
 ```
-Terminal: `CANCELLED`, `DISPUTED`, `FAILED`
 
-### Payment Statuses (on `deliveries.payment_status`)
+**Key libs**:
+| File | Purpose |
+|------|---------|
+| `src/lib/jwt.ts` | Sign/verify JWT. Payload: `{ sub, role }` |
+| `src/lib/socket.ts` | `DeliveryGateway` — all Socket.IO event emission |
+| `src/lib/cloudinary.ts` | Signed upload URL generation + `publicUrl` |
+| `src/lib/geocoding.ts` | Nominatim geocoding, Kigali bounds, district detection |
+| `src/lib/mtn-momo.ts` | MTN MoMo Rwanda — Collections + Disbursements |
+| `src/lib/airtel-money.ts` | Airtel Money Rwanda — Collections + Disbursements |
+| `src/lib/errors.ts` | `BadRequestError(400)` `UnauthorizedError(401)` `ForbiddenError(403)` `NotFoundError(404)` `ConflictError(409)` |
+
+**Key services**:
+| File | Purpose |
+|------|---------|
+| `services/auth.ts` | Signup/signin/OTP/refresh/sessions |
+| `services/deliveries.ts` | Full delivery lifecycle + state transitions |
+| `services/couriers.ts` | Onboarding, profile, GPS, jobs, efficiency |
+| `services/wallet.ts` | Escrow, payouts, top-up, withdraw, platform fee |
+| `services/payments.ts` | Unified MTN/Airtel provider abstraction |
+| `services/efficiency.ts` | 0–100 courier scoring, tier labels, ranking |
+| `services/chat.ts` | Per-delivery DMs + conversation list |
+| `services/admin.ts` | Dashboard, live map, courier approval |
+| `services/notifications.ts` | SMS/WhatsApp/Email — **stub, console only** |
+| `services/stateMachine.ts` | Enforces valid delivery status transitions |
+
+---
+
+## Environment Variables (backend/.env)
+
+| Variable | Purpose |
+|----------|---------|
+| `DATABASE_URL` | Neon pooled connection (port 6543) |
+| `DIRECT_URL` | Neon direct connection (port 5432) |
+| `JWT_SECRET` | HS256 signing key |
+| `JWT_EXPIRES_IN` | `1h` |
+| `REFRESH_TOKEN_EXPIRES_IN` | `30d` |
+| `CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET` | File uploads |
+| `AFRICASTALKING_USERNAME/API_KEY` | SMS — stub, not wired |
+| `PORT` | `3001` |
+| `FRONTEND_URL` | CORS origin (`http://localhost:3000`) |
+| `NODE_ENV` | `development` / `production` |
+| `BROADCAST_RADIUS_KM` | `5` — Haversine search radius around pickup |
+| `BROADCAST_WINDOW_SECONDS` | `90` |
+| `COURIER_CONFIRM_TIMEOUT_SECONDS` | `60` |
+| `OTP_EXPIRY_MINUTES` | `15` |
+| `MIN_DELIVERY_PRICE_RWF` | `200` — minimum agreed price |
+| `MAX_DELIVERY_TIME_MINUTES` | `120` — max agreed delivery time |
+| `SERVICE_FEE_RWF` | `100` — platform fee per delivery |
+| `PLATFORM_WALLET_USER_ID` | UUID of the internal platform revenue user |
+| `MTN_MOMO_BASE_URL` | Sandbox or production MoMo URL |
+| `MTN_MOMO_TARGET_ENV` | `sandbox` or `mtnrwanda` |
+| `MTN_MOMO_CURRENCY` | `RWF` |
+| `MTN_COLLECTION_API_USER_ID/API_KEY/SUBSCRIPTION_KEY` | MTN Collections |
+| `MTN_DISBURSEMENT_API_USER_ID/API_KEY/SUBSCRIPTION_KEY` | MTN Disbursements |
+| `AIRTEL_BASE_URL` | `https://openapi.airtel.africa` |
+| `AIRTEL_CLIENT_ID/CLIENT_SECRET` | Airtel auth credentials |
+| `AIRTEL_MERCHANT_PIN` | Required for Airtel B2C payouts |
+
+---
+
+## Roles & Auth
+
+| Role | Signup method | Signin method |
+|------|--------------|--------------|
+| `SENDER` | `POST /auth/sender/signup` (email+password) | `POST /auth/sender/signin` |
+| `COURIER` | `POST /auth/courier/signup` (email+password+phone) | `POST /auth/courier/signin` |
+| `ADMIN` | DB seed (`npm run prisma:seed`) | `POST /auth/admin/signin` |
+
+**Auth middleware**: reads `Authorization: Bearer <token>` OR `access_token` httpOnly cookie.
+**Token pair**: Access token (1h JWT) + Refresh token (30d, stored in DB, rotated on use).
+Both returned in JSON body AND set as httpOnly cookies on every auth response.
+
+**Courier OTP login** (alternative to email/password):
+1. `POST /auth/courier/check-phone` → `{ exists }`
+2. `POST /auth/courier/request-otp` → OTP logged to console (SMS stub)
+3. `POST /auth/courier/verify-otp` → returns tokens + `needsOnboarding` / `pendingApproval` / `approved`
+
+---
+
+## Courier Onboarding (3-Step Mobile Flow)
+
 ```
-PENDING → HELD → RELEASED
+Step 1: POST /auth/courier/signup          → creates User + seeds OnboardingSession
+Step 2: PUT  /couriers/onboarding/step     → { nationalIdNumber, motorcyclePlate, momoNumber, jacketSerialNumber, operatingZone, step:2 }
+Step 3: PUT  /couriers/onboarding/step     → { selfieUrl, idPhotoUrl, licensePhotoUrl, step:3 }
+Submit: POST /couriers/onboarding/submit   → { agreeToTerms: true }
 ```
-- `PENDING` — default, no payment yet
-- `HELD` — sender has paid, funds held in escrow
-- `RELEASED` — OTP verified, funds released to courier wallet
 
-### Valid Transitions (enforced by `stateMachine.ts`)
-`DRAFT: BROADCAST` · `BROADCAST: COURIER_ASSIGNED, CANCELLED` · `COURIER_ASSIGNED: COURIER_CONFIRMED, BROADCAST, CANCELLED` · `COURIER_CONFIRMED: PICKUP_EN_ROUTE, CANCELLED` · `PICKUP_EN_ROUTE: ARRIVED_PICKUP, CANCELLED` · `ARRIVED_PICKUP: PICKED_UP, CANCELLED` · `PICKED_UP: IN_TRANSIT, DISPUTED` · `IN_TRANSIT: ARRIVED_DROPOFF, DISPUTED` · `ARRIVED_DROPOFF: DELIVERED, FAILED, DISPUTED`
+- `operatingZone` **must be** `"Nyarugenge"` | `"Kicukiro"` | `"Gasabo"` (Zod enum validated)
+- Document URLs come from Cloudinary (see Storage section)
+- Submit → `isApprovedByAdmin: false` → courier waits on PendingApproval screen
+- Admin approves → `PUT /admin/couriers/:id/verify` → emits `courier:approval` WebSocket event
+- Mobile receives event and navigates to CourierDashboard
 
-### Complete Flow (Step-by-Step)
+---
 
-#### 1. Sender creates delivery
-- **Endpoint**: `POST /api/v1/deliveries` (SENDER only)
-- Status: `DRAFT`; `create()` immediately fires `broadcastToNearbyCouriers()` (async, non-blocking)
-- Fields: pickup/dropoff address + lat/lng, contact info, item details, optional `pickupEmail`/`dropoffEmail`
+## Geocoding & Map API
 
-#### 2. Auto-broadcast to nearby couriers
-- Transitions to `BROADCAST`
-- Queries online couriers with non-null `current_lat`/`current_lng`
-- Filters by **Haversine distance <= 300 m** (`BROADCAST_RADIUS_KM = 0.3`) from pickup
-- Emits `job:available` to each courier's room (`courier:{userId}`); sends SMS (stub)
+All coordinates come from the user's map interaction — **never hardcoded**.
 
-#### 3. Courier takes the job
-- **Endpoint**: `POST /deliveries/:id/take-job` (COURIER only)
-- Concurrency-safe: `updateMany({ id, status: BROADCAST, courierId: null })` — count 0 → "Job is no longer available"
-- Assigns courier, transitions to `COURIER_ASSIGNED`, notifies sender
-- Emits `courier:interested` `{ type: 'JOB_TAKEN' }`
+```
+GET  /geocode/bounds          → Kigali bounding box + 3 district centres (public, no auth)
+POST /geocode/resolve         → address string → { lat, lng, district }  (422 if outside Kigali)
+POST /geocode/reverse         → { lat, lng } pin drop → { address, district }  (422 if outside Kigali)
+```
 
-#### 4. Negotiation & Communication
-- Call/chat visible from `COURIER_ASSIGNED` onward
-- Chat: `GET/POST /deliveries/:id/chat` (per-delivery DM); full conversation list: `GET /chat/conversations`
+**Kigali bounding box**: lat `-2.08 to -1.82`, lng `29.92 to 30.20`
 
-#### 5. Confirm agreement
-- **Endpoint**: `POST /deliveries/:id/confirm-agreement` (SENDER or COURIER)
-- Transition: `COURIER_ASSIGNED` → `COURIER_CONFIRMED`
-- Sets `agreed_price_rwf`, `final_price_rwf`, `agreed_delivery_time`
-- Emits `courier:interested` `{ type: 'AGREEMENT_CONFIRMED' }`
+**District centres** (used for nearest-district detection):
+- Nyarugenge: `-1.9494, 30.0605`
+- Gasabo: `-1.9217, 30.0930`
+- Kicukiro: `-1.9864, 30.0897`
 
-#### 6. Sender payment (escrow)
-- **Endpoint**: `POST /deliveries/:id/pay` (SENDER only)
-- Sets `payment_status = 'HELD'`, `payment_held_at`; debits sender wallet (placeholder — gateway TBD)
-- Emits `courier:interested` `{ type: 'PAYMENT_HELD' }`
-- **Start Delivery only allowed when `payment_status === 'HELD'`**
+Delivery creation (`POST /deliveries`) validates both `pickupLat/Lng` and `dropoffLat/Lng` are within the bounding box. Returns `400` if outside Kigali.
 
-#### 7. Courier starts delivery
-- **Endpoint**: `POST /deliveries/:id/start-delivery` (COURIER only)
-- Guard: `payment_status === 'HELD'`
-- Transition: `COURIER_CONFIRMED` → `PICKUP_EN_ROUTE`
-- Generates **pickup OTP** (6-digit, bcrypt-hashed), sets `delivery_started_at`, notifies sender
+---
 
-#### 8. Courier arrives at pickup (handover)
-- **Endpoint**: `POST /deliveries/:id/arrived-pickup` (COURIER only, body `{ otp }`)
-- Validates pickup OTP (bcrypt compare) → `ARRIVED_PICKUP`, sets `courier_arrived_at`
+## Delivery Lifecycle
 
-#### 9. Courier picks up package
-- **Endpoint**: `POST /deliveries/:id/picked-up` → `PICKED_UP`
+### Status Flow
+```
+DRAFT → BROADCAST → COURIER_ASSIGNED → COURIER_CONFIRMED → PICKUP_EN_ROUTE
+  → ARRIVED_PICKUP → PICKED_UP → IN_TRANSIT → ARRIVED_DROPOFF → DELIVERED
+Terminal: CANCELLED · DISPUTED · FAILED
+```
 
-#### 10. Courier in transit
-- **Endpoint**: `POST /deliveries/:id/in-transit` → `IN_TRANSIT`
+### Payment Status (parallel track)
+```
+PENDING → HELD → RELEASED (+ REFUNDED on cancellation)
+```
 
-#### 11. Courier arrives at drop-off
-- **Endpoint**: `POST /deliveries/:id/arrived` (COURIER only)
-- Transition: `IN_TRANSIT` → `ARRIVED_DROPOFF`
-- Generates **dropoff OTP** (6-digit, bcrypt-hashed), sets `dropoff_otp_sent_at`, sends via `notifications.sendOtp()` (SMS + WhatsApp + Email if `dropoff_email`)
-- Returns `{ updated, dropoffOtp }`
+### Constraints
+- `quotedPriceRwf` / `agreedPriceRwf` **minimum 200 RWF**
+- `agreedDeliveryTime` **maximum 120 minutes**
+- Both validated via Zod at route level AND in the service layer
 
-#### 12. Complete delivery (OTP verification)
-- **Endpoint**: `POST /deliveries/:id/complete` (COURIER only, body `{ otp }`)
-- Validates dropoff OTP; skips check if `otp_verified_at` already set
-- On success: → `DELIVERED`; `payment_status = 'RELEASED'`, `payment_released_at`, `otp_verified_at`
-- Credits courier wallet `agreed_price_rwf - 100 RWF`; updates courier stats (deliveries +1, earnings)
-- Notifies sender
+### Step-by-Step
 
-#### 13. Rating
-- **Endpoint**: `POST /deliveries/:id/rate` (SENDER or COURIER, `{ stars 1–5, comment? }`)
-- One rating per delivery (upsert); recomputes courier `avgRating`
+| # | Endpoint | Who | Key action |
+|---|----------|-----|-----------|
+| 1 | `POST /deliveries` | SENDER | Creates delivery, validates coords, fires broadcast |
+| 2 | (internal) | system | `broadcastToNearbyCouriers()` — ranked couriers sorted by efficiency score |
+| 3 | `POST /deliveries/:id/take-job` | COURIER | Atomic claim — returns 409 if already taken |
+| 4 | `POST /deliveries/:id/confirm-agreement` | SENDER/COURIER | Sets `agreedPriceRwf` |
+| 5 | `POST /deliveries/:id/pay` | SENDER | `{ phoneNumber }` — USSD push to sender's MTN/Airtel phone; they approve the pop-up → webhook sets `paymentStatus=HELD` |
+| 6 | `POST /deliveries/:id/start-delivery` | COURIER | Guards on `paymentStatus=HELD`, generates pickup OTP |
+| 7 | `POST /deliveries/:id/arrived-pickup` | COURIER | `{ otp }` — bcrypt verify pickup OTP |
+| 8 | `POST /deliveries/:id/picked-up` | COURIER | Sets `pickedUpAt` |
+| 9 | `POST /deliveries/:id/in-transit` | COURIER | Courier sends GPS every ~15s via `PUT /couriers/me/location` |
+| 10 | `POST /deliveries/:id/arrived` | COURIER | Generates dropoff OTP, sends to recipient |
+| 11 | `POST /deliveries/:id/complete` | COURIER | `{ otp }` — releases escrow, credits courier, recalculates score |
+| 12 | `POST /deliveries/:id/rate` | SENDER/COURIER | `{ stars 1–5, comment? }` — recalculates courier efficiency |
+| 13 | `PUT /deliveries/:id/cancel` | SENDER | Allowed up to `ARRIVED_PICKUP`. Does **not** auto-refund — sender must request a refund |
+| 14 | `POST /deliveries/:id/refund-request` | SENDER | `{ reason, phoneNumber }` — creates refund request, notifies all admins |
+| 15 | `PUT /admin/refunds/:id/approve` | ADMIN | Approves → real MoMo disbursement to sender's phone |
+| 16 | `PUT /admin/refunds/:id/reject` | ADMIN | Rejects with a reason |
 
-#### 14. Recipient tracking (public, no auth)
-- `GET /track/:token` and `POST /track/:token/confirm-otp` — uses `recipient_tracking_token`
+**Refund rule**: cancellation never auto-refunds. Money stays `HELD`; the sender submits a refund request, every admin is notified (WebSocket `refund:requested` + console log), and **only an admin can approve** the refund at any point after. On approval the full `agreedPriceRwf` is disbursed to the sender's MoMo phone — zero fee charged.
 
-## Wallet Logic
+---
 
-#### Tables
-- `wallets` — per-user balance (`user_id` unique)
-- `wallet_transactions` — ledger (type: `credit`, `debit`, `fee`, `withdrawal`, `refund`)
-- `withdrawal_requests` — MoMo payout requests
+## Wallet & Payment System
 
-#### Service Fee
-- Fixed **100 RWF** per delivery (`SERVICE_FEE_RWF` in `backend/src/services/wallet.ts`)
-- Formula: `courier_payout = agreed_price_rwf - 100 RWF`
+### Money Flow
+```
+1. Sender pays for delivery — direct from their phone
+   POST /deliveries/:id/pay { phoneNumber }
+   → MTN/Airtel USSD pop-up pushed to sender's phone
+   → sender approves the pop-up → MTN/Airtel calls POST /wallet/webhook
+   → delivery paymentStatus = HELD  (money is now held / escrowed)
 
-#### Escrow Flow
-1. Sender pays → `payment_status = 'HELD'` (funds held); `debitSender()` debits wallet
-2. OTP verified → `payment_status = 'RELEASED'`
-3. `creditCourier()` credits `agreed_price_rwf - 100 RWF`
-4. Two transactions: CREDIT (net amount) + FEE (100 RWF)
+2. Delivery completed
+   POST /deliveries/:id/complete
+   → courier wallet += (agreedPriceRwf - 100 RWF)
+   → platform wallet += 100 RWF  (internal ledger, no MoMo call)
+   → paymentStatus=RELEASED
 
-#### Withdrawal (MoMo)
-- **Endpoint**: `POST /wallet/withdraw` — validates balance, decrements wallet, creates `withdrawal_requests` row (status `pending`)
-- Top-up: `POST /wallet/topup` (`{ amount, method? }`) — wallet credit (placeholder)
-- Actual MoMo disbursement requires provider integration
+3. Cancellation after payment — admin-approved refund
+   PUT /deliveries/:id/cancel
+   → money STAYS HELD (no auto-refund)
+   → POST /deliveries/:id/refund-request { reason, phoneNumber }
+   → every admin notified (WebSocket refund:requested)
+   → admin approves → real MoMo disbursement to sender's phone → paymentStatus=REFUNDED
 
-## Broadcasting Logic
-- After DRAFT creation, `broadcastToNearbyCouriers()` runs async:
-  1. Transitions to `BROADCAST`
-  2. Queries online couriers with non-null `current_lat`/`current_lng`
-  3. Filters by Haversine distance <= 300 m from pickup
-  4. Emits `job:available` to `courier:{userId}` rooms
-  5. Sends SMS (stub)
+4. Courier withdraws
+   POST /wallet/withdraw { amount, accountNumber, provider }
+   → MTN/Airtel disbursement to courier phone
+   → if fails → wallet auto-refunded
 
-## OTP Logic
-- **Courier auth OTP**: `request-otp` stores `otp:{hash}` in `refresh_tokens` table (10-min expiry); `verify-otp` bcrypt-compares
-- **Pickup OTP**: generated on `startDelivery()`, entered on `arrived-pickup`
-- **Dropoff OTP**: generated on `arrived()`; entered on `complete` (skipped if already verified)
-- All delivery OTPs bcrypt-hashed in DB, 6-digit numeric, sent via `notifications.sendOtp()` (SMS + WhatsApp + Email)
+5. Admin withdraws platform revenue
+   POST /admin/revenue/withdraw { amount, phoneNumber, provider }
+   → MTN/Airtel disbursement to admin phone
+   → if fails → platform wallet auto-refunded
+```
 
-## WebSocket Events (DeliveryGateway, path `/ws`)
+### Refund Management (admin-controlled)
+
+Every refund goes through an admin review — there is **no automatic refund path**.
+
+| Endpoint | Who | Purpose |
+|----------|-----|---------|
+| `POST /deliveries/:id/refund-request` | SENDER | `{ reason, phoneNumber, provider? }` — creates request (status `PENDING_REVIEW`), notifies all admins |
+| `GET /admin/refunds` | ADMIN | List requests, filter by `?status=` |
+| `GET /admin/refunds/:id` | ADMIN | Single request detail |
+| `PUT /admin/refunds/:id/approve` | ADMIN | Approves → MoMo disbursement to sender's phone → `DISBURSED`, delivery `paymentStatus=REFUNDED` |
+| `PUT /admin/refunds/:id/reject` | ADMIN | `{ adminNote }` (required) → `REJECTED` |
+
+**Eligibility**: only deliveries with `paymentStatus=HELD` (escrow, pre-completion) or `RELEASED` (post-completion, e.g. dispute) — one active request per delivery.
+
+**Events**: `refund:requested` → admins room · `refund:approved` / `refund:rejected` → sender's user room.
+
+### Provider Detection (auto)
+- Phone starts with `078x / 079x` → **MTN MoMo**
+- Phone starts with `072x / 073x` → **Airtel Money**
+
+### Platform Wallet
+- Special internal user (`platform@delivery.app`) whose wallet accumulates all 100 RWF fees
+- Created by `npm run prisma:seed` — prints the UUID to set as `PLATFORM_WALLET_USER_ID`
+- No MoMo number on the wallet itself — fees are pure DB ledger entries
+- Admin views balance: `GET /admin/revenue`
+- Admin withdraws: `POST /admin/revenue/withdraw`
+
+### Wallet Endpoints
+| Endpoint | Auth | Purpose |
+|----------|------|---------|
+| `GET /wallet` | ✓ | Balance + transaction history |
+| `POST /wallet/topup` | ✓ | MoMo USSD push (add `phoneNumber` for real charge) |
+| `POST /wallet/withdraw` | ✓ | MoMo disbursement to phone |
+| `GET /wallet/payment-status/:id` | ✓ | Poll provider for pending payment |
+| `POST /wallet/webhook` | — | MTN/Airtel callback (no auth — IP whitelist in prod) |
+
+---
+
+## Courier Efficiency Scoring
+
+Every courier has a `reliabilityScore` (0–100) that:
+1. Determines job broadcast order — highest scored couriers get `job:available` first
+2. Sorts the admin courier list (best couriers at top)
+3. Is visible to the courier on `GET /couriers/me/score`
+
+**Formula:**
+```
+score = (avgRating / 5.0)                                × 40
+      + (delivered / (delivered + cancelled + failed))   × 30
+      + (on-time deliveries / delivered)                 × 20  [125% grace window]
+      + (min(totalDeliveries, 500) / 500)                × 10
+```
+
+**Tiers**: New (0–29) · Learning (30–49) · Active (50–69) · Trusted (70–84) · Premier (85–100)
+
+**Triggered automatically** after: delivery completed, delivery cancelled (if courier was assigned), new rating submitted.
+
+---
+
+## WebSocket Events (path `/ws`)
+
+All connections authenticated via JWT in `socket.handshake.auth.token`.
+
+**Rooms**: `courier:{userId}` (job notifications) · `delivery:{id}` (all delivery updates)
+
 | Event | Direction | Purpose |
 |-------|-----------|---------|
-| `job:available` | Server → `courier:{userId}` | New job available nearby |
-| `job:cancelled` | Server → `delivery:{id}` | Job cancelled |
-| `courier:interested` | Server → `delivery:{id}` | Interest / job taken / payment held / agreement confirmed |
-| `delivery:status` | Server → `delivery:{id}` | Status update |
-| `courier:location` | Server → `delivery:{id}` | Live courier location |
+| `job:available` | Server → `courier:{userId}` | New nearby job (sorted by score) |
+| `job:cancelled` | Server → `delivery:{id}` | Delivery cancelled |
+| `courier:interested` | Server → `delivery:{id}` | JOB_TAKEN / AGREEMENT_CONFIRMED / PAYMENT_HELD |
+| `delivery:status` | Server → `delivery:{id}` | Status change + LOCATION_UPDATE |
 | `message:new` | Server → `delivery:{id}` | New chat message |
-| `location:update` | Client → Server | Courier sends GPS (relayed) |
-| `status:update` | Client → Server | Status change (relayed) |
-| `join:delivery` / `leave:delivery` | Client → Server | Room management |
-| `join:courier` / `leave:courier` | Client → Server | Room management |
+| `courier:approval` | Server → `courier:{userId}` | Admin approved/rejected onboarding |
+| `courier:suspended` | Server → `courier:{userId}` | Admin suspended courier |
+| `refund:requested` | Server → `admins` | Sender requested a refund |
+| `refund:approved` / `refund:rejected` | Server → `user:{userId}` | Admin decision on a refund |
+| `location:update` | Client → Server | Courier GPS (relayed to delivery room) |
+| `join:delivery` / `leave:delivery` | Client → Server | Room join/leave |
+| `join:courier` / `leave:courier` | Client → Server | Room join/leave |
+| `join:user` / `leave:user` | Client → Server | Per-user room (senders receive refund events here) |
 
-## API Endpoints (Full List, all under `/api/v1`)
+GPS relay: `PUT /couriers/me/location` → saves to `CourierLocation` table → emits `LOCATION_UPDATE` to active delivery room.
+
+---
+
+## Chat System
+
+- Per-delivery DMs between sender and courier (admins can read)
+- `GET /deliveries/:id/chat` — message history
+- `POST /deliveries/:id/chat` — send message. Accepts `body` (web) OR `content` (mobile) field
+- Response includes both `body` and `content` for cross-client compatibility
+- `GET /chat/conversations` — all threads for the user (role-aware)
+
+---
+
+## File Storage (Cloudinary)
+
+Client **never** sends files to our server. Flow:
+1. `POST /storage/signed-upload { folder }` → returns `{ uploadUrl, publicUrl }`
+2. Client uploads binary directly to Cloudinary at `uploadUrl`
+3. Client saves `publicUrl` to onboarding step or user profile
+
+**Allowed folders**: `selfies` · `id-photos` · `vehicle-photos` · `jacket-photos` · `license-photos` · `delivery-photos` · `avatars` · `courier-selfies` · `courier-documents`
+
+---
+
+## Recipient Tracking (Public — No Auth)
+
+Every delivery has a `recipientTrackingToken` (40-char hex).
+
+- `GET /track/:token` — full delivery status + courier position + event history
+- `POST /track/:token/confirm-otp { otp }` — recipient pre-confirms dropoff OTP
+
+When recipient pre-confirms, the courier's `POST /deliveries/:id/complete` call skips the OTP check.
+
+---
+
+## Admin Endpoints
+
+All under `/admin`, all require ADMIN role.
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /admin/dashboard` | Platform stats (deliveries, couriers, revenue) |
+| `GET /admin/live-map` | All active deliveries + online couriers with GPS |
+| `GET /admin/revenue` | Platform fee wallet balance + total earned |
+| `POST /admin/revenue/withdraw` | Withdraw platform fees to admin's MoMo phone |
+| `GET /admin/refunds` | List refund requests (filter by `?status=`) |
+| `PUT /admin/refunds/:id/approve` | Approve + disburse a refund to the sender's MoMo |
+| `PUT /admin/refunds/:id/reject` | Reject a refund with a reason |
+| `GET /admin/couriers` | List couriers (sorted by score DESC), filterable |
+| `PUT /admin/couriers/:id/verify` | Approve/reject onboarding → emits `courier:approval` |
+| `PUT /admin/couriers/:id/suspend` | Suspend courier → emits `courier:suspended` |
+| `GET /admin/users` | List users with role + search filter |
+| `GET /admin/deliveries` | All deliveries with optional status filter |
+| `GET /admin/disputes` | Open disputes |
+| `PUT /admin/disputes/:id` | Resolve dispute |
+
+---
+
+## Full API Route Reference (all under `/api/v1`)
+
+### Auth
+`POST /auth/sender/signup` · `/sender/signin` · `/admin/signin` · `/courier/signup` · `/courier/signin` · `/courier/check-phone` · `/courier/request-otp` · `/courier/verify-otp` · `/google` · `/refresh`
+`GET /auth/me` · `/sessions`
+`POST /auth/logout` · `/password/reset` · `/password/update` · `/sessions/revoke-all`
+`PATCH /auth/role`
+
+### Couriers
+`POST /couriers/register` · `/onboarding/start` · `/onboarding/submit`
+`PUT /couriers/onboarding/step` · `/me` · `/me/online` · `/me/location`
+`GET /couriers/onboarding/status` · `/me` · `/me/jobs` · `/me/earnings` · `/me/score` · `/dashboard` · `/nearby`
 
 ### Deliveries
-| Endpoint | Method | Auth | Purpose |
-|----------|--------|------|---------|
-| `/deliveries` | POST | SENDER | Create delivery |
-| `/deliveries` | GET | Any auth | List deliveries (role-filtered) |
-| `/deliveries/available` | GET | COURIER | Available jobs |
-| `/deliveries/:id` | GET | Any auth | Delivery detail |
-| `/deliveries/:id/interest` | POST | COURIER | Express interest (price + ETA) |
-| `/deliveries/:id/take-job` | POST | COURIER | Take the job |
-| `/deliveries/:id/confirm-agreement` | POST | SENDER/COURIER | Confirm price |
-| `/deliveries/:id/pay` | POST | SENDER | Pay (set escrow HELD) |
-| `/deliveries/:id/start-delivery` | POST | COURIER | Start (generates pickup OTP) |
-| `/deliveries/:id/arrived-pickup` | POST | COURIER | Arrive at pickup + pickup OTP |
-| `/deliveries/:id/picked-up` | POST | COURIER | Package picked up |
-| `/deliveries/:id/in-transit` | POST | COURIER | In transit |
-| `/deliveries/:id/arrived` | POST | COURIER | Arrived at dropoff (dropoff OTP) |
-| `/deliveries/:id/complete` | POST | COURIER | Complete delivery (dropoff OTP) |
-| `/deliveries/:id/rate` | POST | SENDER/COURIER | Rate delivery |
-| `/deliveries/:id/cancel` | PUT | SENDER | Cancel delivery |
-| `/deliveries/:id/chat` | GET/POST | Any auth | Delivery DM |
+`POST /deliveries` · `/:id/interest` · `/:id/take-job` · `/:id/confirm-agreement` · `/:id/pay` · `/:id/start-delivery` · `/:id/arrived-pickup` · `/:id/picked-up` · `/:id/in-transit` · `/:id/arrived` · `/:id/complete` · `/:id/rate` · `/:id/chat` · `/:id/refund-request`
+`GET /deliveries` · `/:id` · `/available` · `/:id/chat`
+`PUT /deliveries/:id/cancel`
 
-### Other groups
-| Group | Endpoints |
-|-------|-----------|
-| `/admin` | GET dashboard, GET live-map, GET disputes, GET couriers, PUT couriers/:id/verify, PUT couriers/:id/suspend, GET users, GET deliveries, PUT disputes/:id — all ADMIN |
-| `/wallet` | GET /, POST /topup, POST /withdraw — any auth |
-| `/sender` | GET /dashboard — auth |
-| `/track` | GET /:token, POST /:token/confirm-otp — public (token) |
-| `/storage` | POST /signed-upload — auth |
-| `/users` | PUT /me, POST /me/photo — auth |
-| `/chat` | GET /conversations — auth |
+### Other
+`GET /wallet` · `GET /wallet/payment-status/:id`
+`POST /wallet/topup` · `/withdraw` · `/webhook`
+`GET /sender/dashboard`
+`GET /track/:token` · `POST /track/:token/confirm-otp`
+`POST /storage/signed-upload`
+`PUT /users/me` · `POST /users/me/photo`
+`GET /chat/conversations`
+`GET /geocode/bounds` · `POST /geocode/resolve` · `POST /geocode/reverse`
+`GET /admin/dashboard` · `/live-map` · `/revenue` · `/refunds` · `/couriers` · `/users` · `/deliveries` · `/disputes`
+`POST /admin/revenue/withdraw`
+`PUT /admin/couriers/:id/verify` · `/couriers/:id/suspend` · `/refunds/:id/approve` · `/refunds/:id/reject` · `/disputes/:id`
+`GET /health`
 
-## Important Notes
-- All routes mounted under `/api/v1`; health at `GET /health`
-- Token: backend returns `accessToken`/`refreshToken` in body + sets httpOnly cookies; frontend also stores `access_token` in localStorage
-- Auth middleware reads Bearer header OR `access_token` cookie
-- Roles: SENDER (email/password or Google), COURIER (phone OTP), ADMIN
-- DB access only via Prisma (`backend/src/lib/prisma.ts`) — repositories in `backend/src/repositories/`
-- Types: Prisma schema is source of truth; `backend/src/types.ts` re-exports enums for runtime use
-- `DeliveryGateway` is in `backend/src/lib/socket.ts`, wired in `index.ts` via `setGateway()`
-- Wallet fee logic in `backend/src/services/wallet.ts`
-- Notifications stub in `backend/src/services/notifications.ts` (logs to console)
-- State machine in `backend/src/services/stateMachine.ts`
-- Delivery logic in `backend/src/services/deliveries.ts`
-- Frontend currently in DEV MOCK mode (`NEXT_PUBLIC_DEV_MOCK=true`)
+---
 
-## Remaining External Dependencies
-- **Payment gateway**: escrow flow wired to wallet debits. Replace placeholder with real gateway in `submitPayment()` (`backend/src/services/deliveries.ts`)
-- **SMS provider**: `notifications.ts` is a stub (console logs). `AFRICASTALKING_*` env vars present but unused
-- **WhatsApp provider**: Stub. Integrate Twilio WhatsApp / WATI / 360dialog
-- **Email provider**: Stub. Integrate Resend / SendGrid for email OTP delivery
-- **Courier OTP delivery**: `courierRequestOtp()` logs OTP to console only — no real SMS yet
-- **MoMo disbursement**: `withdrawal_requests` structure exists; integrate MTN MoMo API for actual payout
-- **Maps**: MapLibre GL + OpenRouteService in frontend; `react-native-maps` in mobile
+## Frontend (Web)
+
+- **Framework**: Next.js 16 App Router · Tailwind · Zustand · Socket.IO
+- **Status**: DEV MOCK mode (`NEXT_PUBLIC_DEV_MOCK=true`)
+- All API calls mocked in `frontend/lib/api.ts`
+- To enable real backend: set `NEXT_PUBLIC_DEV_MOCK=false`, `NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1`
+
+### Key Pages
+- `/auth/sender/signin` · `/auth/sender/signup` → sender auth
+- `/auth/courier` → OTP phone entry → `/auth/courier/verify`
+- `/auth/courier/onboarding` → 3-step form → `/auth/courier/pending`
+- `/auth/admin` → admin signin
+- `/sender/dashboard` → sender home
+- `/courier/dashboard` → courier home
+- `/admin/dashboard` → admin panel
+
+---
+
+## Mobile (React Native / Expo)
+
+- **Framework**: Expo ~54 · React Navigation · react-native-maps · Socket.IO client
+- **Infrastructure ready** (created, not yet wired into screens):
+  - `src/lib/api.ts` — typed fetch client with token refresh
+  - `src/lib/storage.ts` — AsyncStorage wrapper for tokens
+  - `src/lib/socket.ts` — Socket.IO singleton
+  - `src/context/AuthContext.tsx` — auth state provider
+
+### Current Status
+- All screens are **UI-only** (no real API calls yet)
+- Infrastructure files exist but are not connected to screens
+- When ready to integrate: wrap `App.tsx` in `AuthProvider`, replace navigation hardcodes with API calls
+
+### Key Screens
+- `SplashScreen` → `LoginScreen` (sender) or courier OTP flow
+- `CourierOnboardingStep1/2/3` → `PendingApproval`
+- `SenderDashboard` · `CourierDashboard`
+- `DeliveryInfoScreen` · `PickupOTP` · `LiveTracking`
+- `ChatScreen` · `Wallet` · `PersonalDetails`
+
+---
+
+## OTP Logic
+
+| Type | Generated | Delivered | Verified |
+|------|-----------|-----------|---------|
+| Auth OTP (courier login) | `request-otp` | Console log (SMS stub) | `verify-otp` bcrypt compare |
+| Pickup OTP | `start-delivery` | Returned to courier in response | `arrived-pickup { otp }` |
+| Dropoff OTP | `arrived` | SMS/WhatsApp/Email to recipient (stub) | `complete { otp }` or pre-confirmed via `/track/:token/confirm-otp` |
+
+All OTPs: 6-digit numeric, bcrypt-hashed before DB storage, single-use.
+
+---
+
+## What's Stubbed (Not Yet Production-Ready)
+
+| Feature | Status | File |
+|---------|--------|------|
+| SMS (Africa's Talking) | Console log only | `services/notifications.ts` |
+| WhatsApp | Console log only | `services/notifications.ts` |
+| Email OTP | Console log only | `services/notifications.ts` |
+| Mobile screen integration | UI only | `mobile/src/screens/` |
+| Frontend real API calls | Mock mode | `frontend/lib/api.ts` |
+
+## What's Live
+
+| Feature | Status |
+|---------|--------|
+| MTN MoMo Collections | ✅ Real USSD push |
+| MTN MoMo Disbursements | ✅ Real payout |
+| Airtel Money Collections | ✅ Real USSD push |
+| Airtel Money Disbursements | ✅ Real payout |
+| Payment webhook handling | ✅ Auto-credits/refunds (admin-approved) |
+| Platform fee wallet | ✅ Internal ledger |
+| Admin revenue withdrawal | ✅ Real MoMo disbursement |
+| Cloudinary uploads | ✅ Signed URL flow |
+| Geocoding (Nominatim) | ✅ Address ↔ coordinates |
+| Kigali bounds validation | ✅ 400 if outside service area |
+| Courier efficiency scoring | ✅ Auto-calculated, affects broadcast order |
+| Delivery state machine | ✅ All transitions enforced |
+| Real-time WebSocket | ✅ GPS relay, job dispatch, chat |
+| Postman collection | ✅ 110 requests, 14 folders |

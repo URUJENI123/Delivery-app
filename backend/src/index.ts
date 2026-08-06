@@ -16,6 +16,8 @@ import { setGateway as setDeliveriesGateway } from './services/deliveries';
 import { setGateway as setChatGateway } from './services/chat';
 import { setGateway as setAdminGateway } from './services/admin';
 import { setGateway as setCouriersGateway } from './services/couriers';
+import { setGateway as setWalletGateway } from './services/wallet';
+import { setGateway as setRefundsGateway } from './services/refunds';
 import prisma from './lib/prisma';
 
 import authRoutes     from './routes/auth';
@@ -46,6 +48,8 @@ setDeliveriesGateway(gateway);
 setChatGateway(gateway);
 setAdminGateway(gateway);
 setCouriersGateway(gateway);
+setWalletGateway(gateway);
+setRefundsGateway(gateway);
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(

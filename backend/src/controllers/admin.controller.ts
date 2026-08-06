@@ -55,3 +55,20 @@ export async function getLiveMap(_req: Request, res: Response, next: NextFunctio
   try { res.json(await adminService.getLiveMap()); }
   catch (err) { next(err); }
 }
+
+export async function getPlatformRevenue(_req: Request, res: Response, next: NextFunction) {
+  try {
+    const { getPlatformRevenue } = await import('../services/wallet');
+    res.json(await getPlatformRevenue());
+  } catch (err) { next(err); }
+}
+
+export async function withdrawPlatformRevenue(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { withdrawPlatformRevenue } = await import('../services/wallet');
+    const { amount, phoneNumber, provider } = req.body;
+    res.status(201).json(
+      await withdrawPlatformRevenue(req.user!.id, amount, phoneNumber, provider),
+    );
+  } catch (err) { next(err); }
+}

@@ -4,6 +4,7 @@ import { authenticate, requireRole } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import * as ctrl     from '../controllers/delivery.controller';
 import * as chatCtrl from '../controllers/chat.controller';
+import * as refundCtrl from '../controllers/refund.controller';
 import { UserRole } from '../types';
 
 const router = Router();
@@ -66,7 +67,12 @@ router.post('/:id/confirm-agreement',
 
 router.post('/:id/pay',
   authenticate, requireRole(UserRole.SENDER),
-  validateBody(z.object({ agreedDeliveryTime: z.number().optional() })),
+  validateBody(z.object({
+    agreedDeliveryTime: z.number().int().min(1).max(120).optional(),
+    // Sender's MTN/Airtel phone — receives the USSD approval pop-up (required)
+    phoneNumber: z.string().min(9, 'Enter your MTN or Airtel phone number to receive the payment request'),
+    provider:    z.enum(['MTN', 'AIRTEL']).optional(),
+  })),
   ctrl.pay,
 );
 
@@ -95,6 +101,17 @@ router.post('/:id/rate',
 );
 
 router.put('/:id/cancel', authenticate, requireRole(UserRole.SENDER), ctrl.cancel);
+
+// Sender requests a refund after cancellation (or any other reason)
+router.post('/:id/refund-request',
+  authenticate, requireRole(UserRole.SENDER),
+  validateBody(z.object({
+    reason:      z.string().min(10, 'Please provide a reason of at least 10 characters'),
+    phoneNumber: z.string().min(9, 'Enter the MoMo phone number to receive the refund'),
+    provider:    z.enum(['MTN', 'AIRTEL']).optional(),
+  })),
+  refundCtrl.requestRefund,
+);
 
 // ─── Embedded chat routes ─────────────────────────────────────────────────────
 router.get('/:id/chat',  authenticate, chatCtrl.getMessages);

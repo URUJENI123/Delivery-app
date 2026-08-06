@@ -142,29 +142,52 @@ export async function confirmAgreement(deliveryId: string, userId: string, agree
 }
 
 // ─── Payment ──────────────────────────────────────────────────────────────────
+//
+// Sender pays directly from their MTN MoMo / Airtel Money account — no wallet
+// top-up needed. A USSD push (pop-up) is sent to the sender's phone, which they
+// approve. The delivery only transitions to HELD after the provider confirms
+// the payment via webhook (or status polling).
 
-export async function submitPayment(deliveryId: string, senderUserId: string, agreedDeliveryTime?: number) {
+export async function submitPayment(
+  deliveryId:     string,
+  senderUserId:   string,
+  phoneNumber:    string,   // sender's MTN/Airtel number — receives the approval pop-up
+  provider?:      string,
+  agreedDeliveryTime?: number,
+) {
   const delivery = await deliveryRepo.findById(deliveryId);
   if (!delivery) throw new NotFoundError('Delivery not found');
   if (delivery.senderId !== senderUserId) throw new ForbiddenError('Not your delivery');
   if (delivery.paymentStatus === 'HELD') throw new BadRequestError('Payment already submitted');
   if (!delivery.agreedPriceRwf) throw new BadRequestError('Agreed price not set — confirm agreement first');
 
-  // Debit sender wallet — throws BadRequestError if insufficient balance
-  await walletSvc.debitSender(senderUserId, delivery.agreedPriceRwf, deliveryId);
+  const amount = delivery.agreedPriceRwf;
+
+  // ── Direct MoMo payment ────────────────────────────────────────────────────
+  // Sends USSD push to sender's phone. Delivery stays as-is until webhook
+  // confirms. The frontend polls GET /wallet/payment-status/:id.
+  const result = await walletSvc.chargeDirectMoMo({
+    userId:       senderUserId,
+    amountRwf:    amount,
+    phoneNumber,
+    provider,
+    referenceId:  deliveryId,
+    description:  `Delivery payment — #${deliveryId.slice(0, 8).toUpperCase()} (RWF ${amount.toLocaleString()})`,
+  });
 
   await deliveryRepo.update(deliveryId, {
-    paymentStatus: 'HELD',
-    paymentHeldAt: new Date(),
+    paymentMethod: 'MOBILE_MONEY' as any,
     ...(agreedDeliveryTime !== undefined ? { agreedDeliveryTime } : {}),
   });
 
-  gateway?.emitCourierInterested(deliveryId, { type: 'PAYMENT_HELD' });
   return {
-    success: true,
-    amount:  delivery.agreedPriceRwf,
-    held:    true,
-    message: `RWF ${delivery.agreedPriceRwf.toLocaleString()} held in escrow. Courier will be paid on delivery completion.`,
+    success:        true,
+    status:         'PENDING',
+    provider:       result.provider,
+    transactionId:  result.transactionId,
+    amount,
+    message:        `Payment request sent to ${phoneNumber}. Please approve the pop-up on your phone.`,
+    pollUrl:        `/api/v1/wallet/payment-status/${result.withdrawalRequestId}`,
   };
 }
 
@@ -362,10 +385,14 @@ export async function cancel(id: string, userId: string) {
 
   const updated = await stateMachine.transition(id, DeliveryStatus.CANCELLED, userId);
 
-  // If sender had already paid (escrow held), refund the full amount back
+  // If the sender had already paid, do NOT auto-refund.
+  // The money stays HELD; the sender must explicitly submit a refund request
+  // (POST /deliveries/:id/refund-request) which the admin reviews and approves.
+  // The delivery's paymentStatus only becomes REFUNDED once the admin's
+  // disbursement actually goes through. This gives the admin full visibility
+  // and control over every money movement.
   if (delivery.paymentStatus === 'HELD' && delivery.agreedPriceRwf) {
-    await walletSvc.refundSender(userId, delivery.agreedPriceRwf, id);
-    await deliveryRepo.update(id, { paymentStatus: 'REFUNDED' as any });
+    console.log(`[Cancel] Delivery #${id.slice(0, 8).toUpperCase()} cancelled with payment HELD — sender should request a refund via POST /deliveries/${id}/refund-request`);
   }
 
   // Recalculate the courier's efficiency score — cancellation hurts completion rate

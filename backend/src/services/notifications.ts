@@ -30,3 +30,19 @@ export async function notifyDeliveryCompleted(phone: string, courierName: string
 export async function notifyMoneyReceived(phone: string, amount: number) {
   log('SMS', phone, `RWF ${amount.toLocaleString()} credited to your wallet. Withdraw to MoMo anytime.`);
 }
+
+export async function notifyRefundApproved(phone: string, amount: number, name: string) {
+  const msg = `Hi ${name}, your refund of RWF ${amount.toLocaleString()} has been approved and sent to your MoMo. Thank you for using Delivery App.`;
+  log('SMS',      phone, msg);
+  log('WhatsApp', phone, msg);
+}
+
+export async function notifyRefundRequested(senderName: string, amount: number, deliveryRef: string) {
+  log('ADMIN', 'admin@delivery.app',
+    `NEW REFUND REQUEST — ${senderName} requested RWF ${amount.toLocaleString()} for delivery #${deliveryRef}. Review it in the admin panel.`);
+}
+
+export async function notifyRefundRejected(phone: string, reason: string) {
+  const msg = `Your refund request has been reviewed. Decision: ${reason}. Contact support if you have questions.`;
+  log('SMS', phone, msg);
+}

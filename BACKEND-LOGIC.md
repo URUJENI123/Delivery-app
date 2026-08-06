@@ -599,22 +599,21 @@ What happens:
 
 ---
 
-### Step 5 — Sender Pays (Escrow)
+### Step 5 — Sender Pays (Direct MoMo, Escrow Hold)
 
-**`POST /deliveries/:id/pay`** (SENDER only)
+**`POST /deliveries/:id/pay`** (SENDER only) — body: `{ phoneNumber, provider? }`
+
+The sender's money comes **directly from their MTN MoMo / Airtel Money account** — not
+from an app wallet balance.
 
 What happens:
-1. Loads the delivery and checks `status === COURIER_CONFIRMED`
-2. Loads sender's wallet → throws `400 Bad Request` if `balance < agreedPriceRwf`
-3. Debits `agreedPriceRwf` from sender wallet in a Prisma transaction:
-   ```typescript
-   await prisma.$transaction([
-     prisma.wallet.update({ where: { userId }, data: { balance: { decrement: amount } } }),
-     prisma.walletTransaction.create({ data: { type: 'debit', amount, description: `Escrow hold — delivery #${shortId}` } }),
-   ]);
-   ```
-4. Sets `paymentStatus = 'HELD'`, `paymentHeldAt = now()`
-5. Emits `courier:interested { type: 'PAYMENT_HELD' }` to delivery room
+1. Loads the delivery and checks `paymentStatus !== HELD` and `agreedPriceRwf` is set
+2. Calls `walletSvc.chargeDirectMoMo()` → `payments.collect()`:
+   - Provider auto-detected from phone prefix (`078x/079x` → MTN, `072x/073x` → Airtel)
+   - Fires a **USSD push** to the sender's phone → they see a pop-up and approve the charge
+3. Stores a `WithdrawalRequest` row (`metadata.type = 'delivery_payment'`, `deliveryId`, `transactionId`) so the webhook can match the callback
+4. Returns `status: 'PENDING'` + `pollUrl` — the client polls `GET /wallet/payment-status/:id`
+5. When MTN/Airtel confirms (webhook `POST /wallet/webhook` **or** polling), `paymentStatus = 'HELD'`, `paymentHeldAt = now()`, `paymentMethod = 'MOBILE_MONEY'`, and `courier:interested { type: 'PAYMENT_HELD' }` is emitted so the courier knows they can start
 
 > **Key rule**: A courier cannot start the delivery until `paymentStatus === 'HELD'`.
 
@@ -743,13 +742,17 @@ Throws `400 Bad Request`: `"Cannot cancel after package has been picked up"`.
 
 Cancellation logic:
 1. Transitions delivery to `CANCELLED`, sets `cancelledAt = now()`
-2. **If `paymentStatus === 'HELD'`**: automatically refunds full `agreedPriceRwf` to sender wallet:
-   ```typescript
-   await walletSvc.refundSender(delivery, userId);
-   // Creates "refund" transaction: "Refund — cancelled delivery #XXXXXXXX"
-   ```
-3. **If a courier was assigned**: calls `efficiency.recalculate(courierId)` to penalise their completion rate
-4. Emits `job:cancelled` WebSocket event to `delivery:{id}` room
+2. **If `paymentStatus === 'HELD'`**: money **stays HELD — no auto-refund**. The sender must
+   call `POST /deliveries/:id/refund-request { reason, phoneNumber }`:
+   - Creates a `RefundRequest` row (`status: PENDING_REVIEW`)
+   - Emits `refund:requested` WebSocket event to all connected admin sockets
+   - Logs a console notification (SMS stub)
+3. **Only an admin** can approve (`PUT /admin/refunds/:id/approve`):
+   - Fires a real MTN/Airtel disbursement to the sender's MoMo number
+   - Marks the request `DISBURSED` and the delivery `paymentStatus = 'REFUNDED'`
+   - Or rejects it (`PUT /admin/refunds/:id/reject`) with a required reason
+4. **If a courier was assigned**: calls `efficiency.recalculate(courierId)` to penalise their completion rate
+5. Emits `job:cancelled` WebSocket event to `delivery:{id}` room
 
 ---
 
@@ -773,7 +776,7 @@ Body: `{ stars: 1-5, comment?: string }`
 | 2 | (internal) | system | BROADCAST | job:available WebSocket |
 | 3 | POST /take-job | COURIER | COURIER_ASSIGNED | atomic update, SMS to sender |
 | 4 | POST /confirm-agreement | SENDER/COURIER | COURIER_CONFIRMED | sets agreedPrice |
-| 5 | POST /pay | SENDER | (paymentStatus=HELD) | debits wallet |
+| 5 | POST /pay | SENDER | (paymentStatus=HELD) | MoMo USSD push → webhook marks HELD |
 | 6 | POST /start-delivery | COURIER | PICKUP_EN_ROUTE | generates pickup OTP |
 | 7 | POST /arrived-pickup | COURIER | ARRIVED_PICKUP | verifies pickup OTP |
 | 8 | POST /picked-up | COURIER | PICKED_UP | sets pickedUpAt |
@@ -796,9 +799,10 @@ Body: `{ stars: 1-5, comment?: string }`
 
 ### Database Tables
 
-- **`wallets`** — one row per user, single `balance` field (in RWF, integer)
+- **`wallets`** — one row per user, single `balance` field (in RWF, integer). Courier earnings + platform fees accumulate here.
 - **`wallet_transactions`** — immutable ledger; types: `credit`, `debit`, `fee`, `withdrawal`, `refund`
-- **`withdrawal_requests`** — records MoMo payout requests; status: `pending`, `completed`, `failed`
+- **`withdrawal_requests`** — records MoMo collection/disbursement requests; status: `pending`, `completed`, `failed`
+- **`refund_requests`** — sender-initiated, admin-approved refunds; status: `PENDING_REVIEW`, `APPROVED`, `REJECTED`, `DISBURSED`
 
 ---
 
@@ -817,34 +821,30 @@ if (!wallet) wallet = await walletRepo.create({ userId, balance: 0 });
 
 **Step 1 — Top Up**
 
-`POST /wallet/topup` — body: `{ amount, method? }`
+`POST /wallet/topup` — body: `{ amount, phoneNumber? }`
 
-- Creates a `credit` transaction
-- Increments wallet balance
-- Actual payment gateway (card/MoMo) is a stub — the credit is applied directly for now
+- With a phone number: real MTN/Airtel USSD push; wallet credited after provider confirms
+- Without a phone number: direct credit (admin/test use only)
+- Senders paying for deliveries do **not** need to top up — they pay directly from their phone (Step 2)
 
 ---
 
-**Step 2 — Escrow Hold (Pay for Delivery)**
+**Step 2 — Direct MoMo Payment (Escrow Hold)**
 
-`POST /deliveries/:id/pay` — body: none (amount comes from `delivery.agreedPriceRwf`)
+`POST /deliveries/:id/pay` — body: `{ phoneNumber, provider? }`
 
 ```typescript
-// Guard
-if (wallet.balance < delivery.agreedPriceRwf)
-  throw new BadRequestError('Insufficient wallet balance');
-
-// Debit in a transaction
-await prisma.$transaction([
-  prisma.wallet.update({ data: { balance: { decrement: agreedPriceRwf } } }),
-  prisma.walletTransaction.create({
-    data: { type: 'debit', amount: agreedPriceRwf,
-            description: `Escrow hold — delivery #${shortId}` }
-  }),
-]);
+const result = await payments.collect({
+  phoneNumber,           // sender's MTN/Airtel number
+  amountRwf,             // = delivery.agreedPriceRwf
+  referenceId: deliveryId,
+});
 ```
 
-Sets `delivery.paymentStatus = 'HELD'`.
+- Sender receives a **USSD pop-up** and approves the charge on their phone
+- MTN/Airtel calls `POST /wallet/webhook` → delivery `paymentStatus = 'HELD'`
+- `GET /wallet/payment-status/:id` is the polling fallback if the webhook is missed
+- **No wallet debit happens** — the money comes from the sender's MoMo account
 
 ---
 
@@ -875,24 +875,26 @@ await prisma.$transaction([
 
 ---
 
-**Step 4 — Cancellation Refund**
+**Step 4 — Admin-Approved Refund (No Auto-Refund)**
 
-`walletSvc.refundSender(delivery, senderId)` — called from `cancelDelivery()` when `paymentStatus === 'HELD'`.
+`POST /deliveries/:id/refund-request` — body: `{ reason, phoneNumber, provider? }` (SENDER)
 
-```typescript
-await prisma.$transaction([
-  prisma.wallet.update({
-    where: { userId: senderId },
-    data: { balance: { increment: delivery.agreedPriceRwf } }
-  }),
-  prisma.walletTransaction.create({
-    data: { type: 'refund', amount: delivery.agreedPriceRwf,
-            description: `Refund — cancelled delivery #${shortId}` }
-  }),
-]);
-```
+Cancelling **never** auto-refunds. Money stays `HELD` until an admin acts:
 
-Full amount is refunded — no fee is charged on cancellations.
+1. Sender creates a `RefundRequest` (`status: PENDING_REVIEW`) → all admins notified via WebSocket `refund:requested`
+2. Admin reviews in the admin panel: `GET /admin/refunds`
+3. **Approve** (`PUT /admin/refunds/:id/approve`):
+   ```typescript
+   await payments.disburse({
+     phoneNumber: req.phoneNumber,   // sender's MoMo number
+     amountRwf:   req.amountRwf,     // full agreedPriceRwf — zero fee
+     referenceId: req.id,
+   });
+   ```
+   → request `DISBURSED`, delivery `paymentStatus = 'REFUNDED'`, sender notified
+4. **Reject** (`PUT /admin/refunds/:id/reject`) with a required `adminNote` → `REJECTED`
+
+If the MoMo disbursement fails, the request is reverted to `PENDING_REVIEW` so the admin can retry.
 
 ---
 
@@ -1801,12 +1803,81 @@ All routes mount under `/api/v1`. Health check at `GET /health`.
 | WhatsApp OTP | Stub | `services/notifications.ts` |
 | Email OTP | Stub | `services/notifications.ts` |
 | Courier OTP delivery | Stub | `auth.ts` service |
-| Payment gateway (card/MoMo in) | Stub | `services/deliveries.ts` `submitPayment()` |
-| MTN MoMo disbursement (withdrawals) | Stub | `services/wallet.ts` |
-
-All stubs log the relevant data to console so development and testing work without
-real API keys.
+| MTN MoMo Collections | **Live** — real USSD push | `lib/mtn-momo.ts` |
+| MTN MoMo Disbursements | **Live** — real payout | `lib/mtn-momo.ts` |
+| Airtel Money Collections | **Live** — real USSD push | `lib/airtel-money.ts` |
+| Airtel Money Disbursements | **Live** — real payout | `lib/airtel-money.ts` |
+| Platform fee wallet | **Live** — internal ledger | `services/wallet.ts` `creditPlatformFee()` |
 
 ---
+
+## Appendix C: Mobile Money Payment Integration
+
+### How Payments Work (plain English)
+
+Think of the app wallet as an in-app piggy bank. Users top it up with real MoMo money, spend it on deliveries, and couriers withdraw their earnings back to MoMo.
+
+```
+Sender's phone (MTN/Airtel)
+        │ USSD push → Approve
+        ▼
+  App wallet (DB balance)  ──pay──▶  Escrow (locked)
+                                           │
+                                     delivery done
+                                           │
+                           ┌───────────────┴──────────────┐
+                           ▼                              ▼
+                  Courier wallet          Platform wallet (fee)
+                  +2,900 RWF             +100 RWF
+                       │
+                  tap Withdraw
+                       │
+                       ▼
+            Courier's MTN/Airtel phone 💰
+```
+
+### Provider Auto-Detection
+
+The system detects MTN vs Airtel from the Rwanda phone number prefix:
+
+| Prefix | Provider |
+|--------|---------|
+| 078x, 079x | MTN MoMo |
+| 072x, 073x | Airtel Money |
+
+### New Files
+
+| File | Purpose |
+|------|---------|
+| `src/lib/mtn-momo.ts` | MTN MoMo Rwanda — Collections + Disbursements |
+| `src/lib/airtel-money.ts` | Airtel Money Rwanda — Collections + Disbursements |
+| `src/services/payments.ts` | Unified provider abstraction |
+
+### New Endpoints
+
+| Endpoint | Auth | Purpose |
+|----------|------|---------|
+| `POST /wallet/topup` + `phoneNumber` | ✓ | Real MoMo USSD push to sender |
+| `POST /wallet/withdraw` + `accountNumber` | ✓ | Real MoMo payout to courier |
+| `GET /wallet/payment-status/:id` | ✓ | Poll provider for pending payment |
+| `POST /wallet/webhook` | — | MTN/Airtel callback on payment completion |
+| `GET /admin/revenue` | ✓ ADMIN | Platform fee wallet balance |
+
+### Platform Fee Wallet
+
+The 100 RWF service fee from every delivery goes into a special internal wallet
+(not a MoMo transfer — pure DB ledger). No hardcoded phone number needed.
+
+Setup: run `npm run prisma:seed` — it creates the platform user and prints the UUID
+to paste into `.env` as `PLATFORM_WALLET_USER_ID`.
+
+### Going Live
+
+1. Create accounts at [momoapi.mtn.co.rw](https://momoapi.mtn.co.rw) and [developers.airtel.africa](https://developers.airtel.africa)
+2. Create Collections + Disbursements products in each portal
+3. Copy the credentials into `.env` (see `.env.example` for all variables)
+4. Set `MTN_MOMO_TARGET_ENV=mtnrwanda` and `MTN_MOMO_BASE_URL=https://momoapi.mtn.co.rw`
+5. Register `POST /api/v1/wallet/webhook` as the callback URL in both portals
+6. Restrict the webhook route to MTN/Airtel IP ranges at your reverse proxy
 
 *Document generated from live codebase. Last updated: 2025.*

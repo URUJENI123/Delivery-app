@@ -116,6 +116,13 @@ enum WithdrawalStatus {
   failed
 }
 
+enum RefundStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  DISBURSED
+}
+
 model User {
   id              String    @id @default(uuid())
   email           String?   @unique
@@ -140,6 +147,8 @@ model User {
   ratingsReceived   Rating[]           @relation("RatingsReceived")
   wallet            Wallet?
   refreshTokens     RefreshToken[]
+  refundsRequested  RefundRequest[] @relation("RefundsRequested")
+  refundsReviewed   RefundRequest[] @relation("RefundsReviewed")
 
   @@map("users")
 }
@@ -324,6 +333,7 @@ model Delivery {
   courierInterests CourierInterest[]
   dispute         Dispute?
   rating          Rating?
+  refundRequests  RefundRequest[]
 
   @@index([status])
   @@index([senderId])
@@ -468,4 +478,30 @@ model WithdrawalRequest {
   @@index([userId])
   @@index([status])
   @@map("withdrawal_requests")
+}
+
+model RefundRequest {
+  id            String       @id @default(uuid())
+  deliveryId    String       @map("delivery_id")
+  requestedById String       @map("requested_by_id")   // sender's userId
+  amountRwf     Float        @map("amount_rwf")
+  reason        String
+  status        RefundStatus @default(PENDING_REVIEW)
+  phoneNumber   String?      @map("phone_number")       // MoMo number for disbursement
+  provider      String?                                 // MTN or AIRTEL
+  adminNote     String?      @map("admin_note")
+  reviewedById  String?      @map("reviewed_by_id")     // admin who approved/rejected
+  reviewedAt    DateTime?    @map("reviewed_at")
+  disbursedAt   DateTime?    @map("disbursed_at")
+  transactionId String?      @map("transaction_id")     // MoMo txn ref
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  delivery    Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  requestedBy User     @relation("RefundsRequested", fields: [requestedById], references: [id])
+  reviewedBy  User?    @relation("RefundsReviewed",  fields: [reviewedById],  references: [id])
+
+  @@index([status])
+  @@index([requestedById])
+  @@map("refund_requests")
 }

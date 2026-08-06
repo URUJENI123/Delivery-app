@@ -2,6 +2,10 @@ import * as walletRepo from '../repositories/wallet.repository';
 import * as payments   from './payments';
 import { NotFoundError, BadRequestError } from '../lib/errors';
 import prisma from '../lib/prisma';
+import type { DeliveryGateway } from '../lib/socket';
+
+let gateway: DeliveryGateway | null = null;
+export function setGateway(gw: DeliveryGateway) { gateway = gw; }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -177,38 +181,6 @@ export async function withdraw(
   };
 }
 
-// ─── Sender payment (escrow debit) ────────────────────────────────────────────
-//
-// Called when sender pays for a delivery.
-// Verifies the sender has sufficient balance, then debits the full agreed price
-// and holds it in escrow (tracked as a 'debit' transaction).
-
-export async function debitSender(senderUserId: string, amount: number, deliveryId: string) {
-  if (amount <= 0) throw new BadRequestError('Invalid payment amount');
-
-  const wallet = await walletRepo.upsert(senderUserId);
-
-  // Re-fetch with current balance to check sufficiency
-  const fresh = await walletRepo.findByUser(senderUserId);
-  if (!fresh || fresh.balance < amount) {
-    throw new BadRequestError(
-      `Insufficient wallet balance. You need RWF ${amount.toLocaleString()} but have RWF ${(fresh?.balance ?? 0).toLocaleString()}.`,
-    );
-  }
-
-  await walletRepo.decrement(wallet.id, amount);
-  await walletRepo.createTransaction({
-    walletId:      wallet.id,
-    type:          'debit',
-    description:   `Payment held in escrow — delivery #${deliveryId.slice(0, 8).toUpperCase()}`,
-    amount,
-    referenceType: 'delivery',
-    referenceId:   deliveryId,
-  });
-
-  return { success: true, amount, heldInEscrow: true };
-}
-
 // ─── Courier payout (on delivery completion) ──────────────────────────────────
 //
 // Called automatically when a delivery is marked DELIVERED.
@@ -216,11 +188,11 @@ export async function debitSender(senderUserId: string, amount: number, delivery
 //   1. Full agreed price arrives from sender escrow
 //   2. Platform fee (SERVICE_FEE_RWF = 100 RWF) is deducted
 //   3. Net amount is credited to the courier's wallet
-//   4. Two transactions are written: one CREDIT (net), one FEE (100 RWF)
+//   4. Fee is credited to the platform's own wallet (internal ledger — no MoMo call)
 //
 // Example: agreed price = 3,000 RWF
-//   → courier receives: 2,900 RWF
-//   → platform keeps:     100 RWF
+//   → courier receives: 2,900 RWF  (credited to courier wallet)
+//   → platform keeps:     100 RWF  (credited to platform wallet)
 
 export async function creditCourier(courierUserId: string, amount: number, deliveryId: string) {
   const fee       = SERVICE_FEE_RWF;
@@ -240,7 +212,7 @@ export async function creditCourier(courierUserId: string, amount: number, deliv
     referenceId:   deliveryId,
   });
 
-  // Transaction 2: Platform service fee record (for transparency)
+  // Transaction 2: Platform service fee (visible on courier statement for transparency)
   await walletRepo.createTransaction({
     walletId:      wallet.id,
     type:          'fee',
@@ -250,27 +222,218 @@ export async function creditCourier(courierUserId: string, amount: number, deliv
     referenceId:   deliveryId,
   });
 
+  // Transaction 3: Credit the fee to the platform's internal wallet
+  // PLATFORM_WALLET_USER_ID is a special reserved user in the DB whose wallet
+  // accumulates all service fees. No phone number, no MoMo call — pure ledger.
+  await creditPlatformFee(fee, deliveryId);
+
   return { grossAmount: amount, fee, netAmount };
 }
 
-// ─── Sender refund (on cancellation after payment was held) ───────────────────
+// ─── Platform fee wallet ──────────────────────────────────────────────────────
 //
-// If a delivery is cancelled after the sender has already paid (paymentStatus=HELD),
-// the held amount is refunded back to the sender's wallet.
+// The platform has its own internal wallet that accumulates all service fees.
+// PLATFORM_WALLET_USER_ID is set in .env — it's the ID of a special "platform"
+// user row in the DB. No MoMo number needed. The balance just grows over time
+// as deliveries complete, giving you a clear revenue ledger.
+//
+// To set up:
+//   1. Create a user row in the DB with role=ADMIN (or a new PLATFORM role)
+//   2. Copy its UUID into .env as PLATFORM_WALLET_USER_ID
+//   3. That's it — fees accumulate automatically on every delivery
 
-export async function refundSender(senderUserId: string, amount: number, deliveryId: string) {
-  if (amount <= 0) return;
-  const wallet = await walletRepo.upsert(senderUserId);
-  await walletRepo.increment(wallet.id, amount);
+async function creditPlatformFee(feeAmount: number, deliveryId: string): Promise<void> {
+  const platformUserId = process.env.PLATFORM_WALLET_USER_ID;
+  if (!platformUserId) {
+    // Not configured yet — log and skip (fee is still deducted from courier, just not tracked separately)
+    console.log(`[Platform Fee] +RWF ${feeAmount} from delivery #${deliveryId.slice(0, 8).toUpperCase()} — set PLATFORM_WALLET_USER_ID in .env to enable revenue tracking`);
+    return;
+  }
+
+  const platformWallet = await walletRepo.upsert(platformUserId);
+  await walletRepo.increment(platformWallet.id, feeAmount);
   await walletRepo.createTransaction({
-    walletId:      wallet.id,
-    type:          'refund',
-    description:   `Refund — cancelled delivery #${deliveryId.slice(0, 8).toUpperCase()}`,
-    amount,
+    walletId:      platformWallet.id,
+    type:          'credit',
+    description:   `Service fee — delivery #${deliveryId.slice(0, 8).toUpperCase()}`,
+    amount:        feeAmount,
     referenceType: 'delivery',
     referenceId:   deliveryId,
   });
-  return { refunded: true, amount };
+}
+
+// Returns the platform's total accumulated fee revenue — used by the admin dashboard.
+export async function getPlatformRevenue() {
+  const platformUserId = process.env.PLATFORM_WALLET_USER_ID;
+  if (!platformUserId) return { balance: 0, totalFees: 0, configured: false };
+
+  const wallet = await walletRepo.findByUser(platformUserId);
+  if (!wallet) return { balance: 0, totalFees: 0, configured: true };
+
+  const totalFees = (wallet as any).transactions
+    ?.filter((t: any) => t.type === 'credit')
+    .reduce((sum: number, t: any) => sum + t.amount, 0) ?? 0;
+
+  return {
+    balance:    wallet.balance,
+    totalFees,
+    configured: true,
+  };
+}
+
+// ─── Platform revenue withdrawal (ADMIN only) ─────────────────────────────────
+//
+// Admin withdraws accumulated service fees from the platform wallet to their
+// own MTN or Airtel MoMo number. Works exactly like a courier withdrawal —
+// provider is auto-detected from the phone number prefix.
+//
+// Only the admin can call this (enforced at the route level via requireRole(ADMIN)).
+
+export async function withdrawPlatformRevenue(
+  adminUserId:   string,
+  amountRwf:     number,
+  phoneNumber:   string,
+  provider?:     string,
+) {
+  if (!amountRwf || amountRwf <= 0) {
+    throw new BadRequestError('Amount must be positive');
+  }
+
+  const platformUserId = process.env.PLATFORM_WALLET_USER_ID;
+  if (!platformUserId) {
+    throw new BadRequestError(
+      'Platform wallet is not configured. Set PLATFORM_WALLET_USER_ID in .env and run prisma:seed.',
+    );
+  }
+
+  // Load the platform wallet
+  const platformWallet = await walletRepo.findByUser(platformUserId);
+  if (!platformWallet) {
+    throw new NotFoundError('Platform wallet not found. Run npm run prisma:seed first.');
+  }
+  if (platformWallet.balance < amountRwf) {
+    throw new BadRequestError(
+      `Insufficient platform balance. Available: RWF ${platformWallet.balance.toLocaleString()}, requested: RWF ${amountRwf.toLocaleString()}.`,
+    );
+  }
+
+  // Decrement platform wallet immediately to prevent double-spend
+  await walletRepo.decrement(platformWallet.id, amountRwf);
+
+  // Create debit transaction on the platform wallet
+  await walletRepo.createTransaction({
+    walletId:      platformWallet.id,
+    type:          'withdrawal',
+    description:   `Admin withdrawal by ${adminUserId.slice(0, 8).toUpperCase()} to ${phoneNumber}`,
+    amount:        amountRwf,
+    referenceType: 'admin_withdrawal',
+    referenceId:   adminUserId,
+  });
+
+  // Create the withdrawal request record
+  const req = await walletRepo.createWithdrawal({
+    walletId:      platformWallet.id,
+    userId:        adminUserId,
+    amount:        amountRwf,
+    method:        'mobile_money',
+    provider:      provider ?? null,
+    accountNumber: phoneNumber,
+  });
+
+  // Fire the real MoMo disbursement
+  try {
+    const result = await payments.disburse({
+      phoneNumber,
+      amountRwf,
+      referenceId: req.id,
+      note:        `Delivery App — platform revenue withdrawal`,
+      provider:    provider ? (provider.toUpperCase() as payments.MobileProvider) : undefined,
+    });
+
+    await prisma.withdrawalRequest.update({
+      where: { id: req.id },
+      data:  {
+        provider:  result.provider,
+        reference: result.transactionId,
+        status:    result.status === 'SUCCESS' ? 'completed' : 'processing',
+        metadata:  { transactionId: result.transactionId, type: 'platform_withdrawal' } as any,
+      },
+    });
+
+    return {
+      success:             true,
+      amount:              amountRwf,
+      withdrawalRequestId: req.id,
+      provider:            result.provider,
+      transactionId:       result.transactionId,
+      status:              result.status === 'SUCCESS' ? 'completed' : 'processing',
+      remainingBalance:    platformWallet.balance - amountRwf,
+      message:             `RWF ${amountRwf.toLocaleString()} disbursement initiated to ${phoneNumber}.`,
+    };
+  } catch (err: any) {
+    // Disbursement failed — refund the platform wallet
+    await walletRepo.increment(platformWallet.id, amountRwf);
+    await prisma.withdrawalRequest.update({
+      where: { id: req.id },
+      data:  { status: 'failed', metadata: { error: err.message } as any },
+    });
+    throw new BadRequestError(`Platform withdrawal failed: ${err.message}`);
+  }
+}
+
+// ─── Direct MoMo charge (for paying a delivery directly from phone) ───────────
+//
+// Called from submitPayment() when the sender chooses to pay directly
+// from their MTN/Airtel phone instead of using their app wallet balance.
+// Returns PENDING — the webhook later confirms and marks delivery as HELD.
+
+export async function chargeDirectMoMo(params: {
+  userId:       string;
+  amountRwf:    number;
+  phoneNumber:  string;
+  provider?:    string;
+  referenceId:  string;   // deliveryId used as reference
+  description:  string;
+}): Promise<{ provider: string; transactionId: string; withdrawalRequestId: string }> {
+  const { userId, amountRwf, phoneNumber, provider, referenceId, description } = params;
+
+  const wallet = await walletRepo.upsert(userId);
+
+  const result = await payments.collect({
+    phoneNumber,
+    amountRwf,
+    referenceId,
+    description,
+    provider: provider ? (provider.toUpperCase() as payments.MobileProvider) : undefined,
+  });
+
+  // Store for webhook matching — metadata marks it as a delivery payment.
+  // No wallet transaction is created here: the money comes from the sender's
+  // MoMo account directly, never from their app wallet balance.
+  const req = await prisma.withdrawalRequest.create({
+    data: {
+      walletId:      wallet.id,
+      userId,
+      amount:        amountRwf,
+      method:        result.provider.toLowerCase(),
+      provider:      result.provider,
+      accountNumber: phoneNumber,
+      status:        'pending',
+      reference:     result.transactionId,
+      metadata:      {
+        type:          'delivery_payment',
+        deliveryId:    referenceId,
+        transactionId: result.transactionId,
+        referenceId:   result.referenceId,
+      } as any,
+    },
+  });
+
+  return {
+    provider:            result.provider,
+    transactionId:       result.transactionId,
+    withdrawalRequestId: req.id,
+  };
 }
 
 // ─── Payment status check ──────────────────────────────────────────────────────
@@ -289,6 +452,7 @@ export async function checkPaymentStatus(withdrawalRequestId: string) {
   const meta      = (request.metadata as any) ?? {};
   const txnId     = meta.transactionId as string | undefined;
   const isTopup   = meta.type === 'topup';
+  const isDeliveryPayment = meta.type === 'delivery_payment';
   const provider  = (request.provider?.toUpperCase() ?? 'MTN') as payments.MobileProvider;
 
   if (!txnId) return { status: request.status, message: 'No transaction ID on record' };
@@ -296,26 +460,44 @@ export async function checkPaymentStatus(withdrawalRequestId: string) {
   const result = await payments.pollStatus({
     provider,
     transactionId: txnId,
-    type:          isTopup ? 'collection' : 'disbursement',
+    // Delivery payments and top-ups are both collections (money comes IN);
+    // withdrawals are disbursements (money goes OUT).
+    type:          isTopup || isDeliveryPayment ? 'collection' : 'disbursement',
   });
 
   if (result.status === 'SUCCESS' && (request.status as string) !== 'completed') {
-    await prisma.$transaction([
-      // For top-ups: credit the wallet on first confirmed SUCCESS
-      ...(isTopup ? [
-        prisma.wallet.update({
-          where: { id: request.walletId },
-          data:  { balance: { increment: request.amount } },
+    if (isDeliveryPayment && meta.deliveryId) {
+      // Delivery payment confirmed via polling (fallback if the webhook was missed)
+      await prisma.$transaction([
+        prisma.delivery.update({
+          where: { id: meta.deliveryId },
+          data:  { paymentStatus: 'HELD', paymentHeldAt: new Date() },
         }),
-      ] : []),
-      prisma.withdrawalRequest.update({
-        where: { id: withdrawalRequestId },
-        data:  { status: 'completed' },
-      }),
-    ]);
+        prisma.withdrawalRequest.update({
+          where: { id: withdrawalRequestId },
+          data:  { status: 'completed' },
+        }),
+      ]);
+      gateway?.emitCourierInterested(meta.deliveryId, { type: 'PAYMENT_HELD' });
+    } else {
+      await prisma.$transaction([
+        // For top-ups: credit the wallet on first confirmed SUCCESS
+        ...(isTopup ? [
+          prisma.wallet.update({
+            where: { id: request.walletId },
+            data:  { balance: { increment: request.amount } },
+          }),
+        ] : []),
+        prisma.withdrawalRequest.update({
+          where: { id: withdrawalRequestId },
+          data:  { status: 'completed' },
+        }),
+      ]);
+    }
   } else if (result.status === 'FAILED') {
-    // For top-ups that failed: do NOT credit. For disbursements: refund wallet.
-    if (!isTopup) {
+    // For top-ups / delivery payments that failed: do NOT credit / mark held.
+    // For disbursements: refund the wallet.
+    if (!isTopup && !isDeliveryPayment) {
       await walletRepo.increment(request.walletId, request.amount);
     }
     await prisma.withdrawalRequest.update({
@@ -376,25 +558,47 @@ export async function handleProviderWebhook(body: Record<string, unknown>) {
 
   const meta    = (request.metadata as any) ?? {};
   const isTopup = meta.type === 'topup';
+  const isDeliveryPayment = meta.type === 'delivery_payment';
 
   if (status === 'SUCCESS') {
-    await prisma.$transaction([
-      ...(isTopup ? [
-        prisma.wallet.update({
-          where: { id: request.walletId },
-          data:  { balance: { increment: request.amount } },
+    if (isDeliveryPayment && meta.deliveryId) {
+      // Delivery payment confirmed — mark delivery as HELD
+      await prisma.$transaction([
+        prisma.delivery.update({
+          where: { id: meta.deliveryId },
+          data:  { paymentStatus: 'HELD', paymentHeldAt: new Date(), paymentMethod: 'MOBILE_MONEY' as any },
         }),
-      ] : []),
-      prisma.withdrawalRequest.update({
-        where: { id: request.id },
-        data:  { status: 'completed' },
-      }),
-    ]);
-    console.log(`[Webhook] ${isTopup ? 'Top-up' : 'Disbursement'} CONFIRMED — ${request.id}, amount: ${request.amount} RWF`);
+        prisma.withdrawalRequest.update({
+          where: { id: request.id },
+          data:  { status: 'completed' },
+        }),
+      ]);
+      // Tell the courier in real time that the payment is held and they can start
+      gateway?.emitCourierInterested(meta.deliveryId, { type: 'PAYMENT_HELD' });
+      console.log(`[Webhook] Delivery payment CONFIRMED — delivery #${meta.deliveryId.slice(0, 8).toUpperCase()}, amount: RWF ${request.amount}`);
+    } else {
+      await prisma.$transaction([
+        ...(isTopup ? [
+          prisma.wallet.update({
+            where: { id: request.walletId },
+            data:  { balance: { increment: request.amount } },
+          }),
+        ] : []),
+        prisma.withdrawalRequest.update({
+          where: { id: request.id },
+          data:  { status: 'completed' },
+        }),
+      ]);
+      console.log(`[Webhook] ${isTopup ? 'Top-up' : 'Disbursement'} CONFIRMED — ${request.id}, amount: ${request.amount} RWF`);
+    }
   } else {
-    if (!isTopup) {
+    // FAILED — refund wallet only for disbursements (not delivery payments or top-ups)
+    if (!isTopup && !isDeliveryPayment) {
       await walletRepo.increment(request.walletId, request.amount);
       console.log(`[Webhook] Disbursement FAILED — refunded ${request.amount} RWF to wallet ${request.walletId}`);
+    }
+    if (isDeliveryPayment) {
+      console.log(`[Webhook] Delivery payment FAILED — delivery #${meta.deliveryId}, no charge applied`);
     }
     await prisma.withdrawalRequest.update({
       where: { id: request.id },

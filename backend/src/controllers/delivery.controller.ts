@@ -39,8 +39,14 @@ export async function confirmAgreement(req: Request, res: Response, next: NextFu
 }
 
 export async function pay(req: Request, res: Response, next: NextFunction) {
-  try { res.json(await deliveriesService.submitPayment(req.params.id, req.user!.id, req.body.agreedDeliveryTime)); }
-  catch (err) { next(err); }
+  try {
+    const { agreedDeliveryTime, phoneNumber, provider } = req.body;
+    res.json(
+      await deliveriesService.submitPayment(
+        req.params.id, req.user!.id, phoneNumber, provider, agreedDeliveryTime,
+      ),
+    );
+  } catch (err) { next(err); }
 }
 
 export async function startDelivery(req: Request, res: Response, next: NextFunction) {
