@@ -79,10 +79,12 @@ export async function getMessages(deliveryId: string, userId: string) {
   const isAdmin   = user?.role === UserRole.ADMIN;
   if (!isSender && !isCourier && !isAdmin) throw new ForbiddenError('Not authorized');
 
-  return chatRepo.findByDelivery(deliveryId);
+  const messages = await chatRepo.findByDelivery(deliveryId);
+  // Add 'content' alias alongside 'body' for mobile client compatibility
+  return messages.map(m => ({ ...m, content: m.body }));
 }
 
-export async function sendMessage(deliveryId: string, userId: string, dto: { body: string; photoUrl?: string }) {
+export async function sendMessage(deliveryId: string, userId: string, dto: { body?: string; content?: string; photoUrl?: string }) {
   const delivery = await deliveryRepo.findById(deliveryId);
   if (!delivery) throw new NotFoundError('Delivery not found');
 
@@ -92,12 +94,15 @@ export async function sendMessage(deliveryId: string, userId: string, dto: { bod
   const isAdmin   = user?.role === UserRole.ADMIN;
   if (!isSender && !isCourier && !isAdmin) throw new ForbiddenError('Not authorized');
 
+  // Accept either 'body' (web/Postman) or 'content' (mobile client)
+  const messageBody = dto.body ?? dto.content ?? '';
   const message = await chatRepo.create({
     deliveryId,
     senderId: userId,
-    body:     dto.body,
+    body:     messageBody,
     photoUrl: dto.photoUrl ?? null,
   });
   gateway?.emitMessageNew(deliveryId, message);
-  return message;
+  // Return both 'body' and 'content' so web and mobile clients both work
+  return { ...message, content: message.body };
 }

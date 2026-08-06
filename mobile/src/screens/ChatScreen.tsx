@@ -19,11 +19,11 @@ interface Message {
 }
 
 const phoneNumbers: Record<string, string> = {
-  support:    '+250788000000',
-  'jean-paul':'+250788000123',
-  amina:      '+250788000456',
-  ganza:      '+250788000789',
-  umutoni:    '+250788000321',
+  support:     '+250788000000',
+  'jean-paul': '+250788000123',
+  amina:       '+250788000456',
+  ganza:       '+250788000789',
+  umutoni:     '+250788000321',
 }
 
 const initialMessages: Record<string, Message[]> = {
@@ -77,13 +77,10 @@ export function ChatScreen({ route, navigation }: Props) {
           <Ionicons name="arrow-back" size={22} color={colors.primary} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          {avatar ? (
-            <Image source={{ uri: avatar }} style={styles.headerAvatar} />
-          ) : (
-            <View style={styles.headerAvatarPlaceholder}>
-              <Ionicons name="headset" size={18} color={colors.white} />
-            </View>
-          )}
+          {avatar
+            ? <Image source={{ uri: avatar }} style={styles.headerAvatar} />
+            : <View style={styles.headerAvatarPlaceholder}><Ionicons name="headset" size={18} color={colors.white} /></View>
+          }
           <View>
             <Text style={styles.headerName}>{name}</Text>
             {orderTag && <Text style={styles.headerOrder}>{orderTag}</Text>}
@@ -143,59 +140,24 @@ export function ChatScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
-
-  topBar: {
-    height: 56, flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', paddingHorizontal: spacing.md,
-    borderBottomWidth: 1, borderBottomColor: colors.outlineVariant + '60',
-  },
+  topBar: { height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.outlineVariant + '60' },
   backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   headerCenter: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.sm },
   headerAvatar: { width: 36, height: 36, borderRadius: 18 },
-  headerAvatarPlaceholder: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: colors.primaryContainer, alignItems: 'center', justifyContent: 'center',
-  },
+  headerAvatarPlaceholder: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primaryContainer, alignItems: 'center', justifyContent: 'center' },
   headerName: { fontSize: 15, fontWeight: '700', color: colors.onSurface },
   headerOrder: { fontSize: 11, color: colors.onSurfaceVariant },
   callBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-
   messageList: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.lg },
-
-  bubble: {
-    maxWidth: '78%', borderRadius: borderRadius.xl, padding: spacing.sm,
-    paddingHorizontal: spacing.md, gap: 4,
-  },
-  bubbleMine: {
-    alignSelf: 'flex-end', backgroundColor: colors.primaryContainer,
-    borderBottomRightRadius: 4,
-  },
-  bubbleTheirs: {
-    alignSelf: 'flex-start', backgroundColor: colors.surfaceContainerHigh,
-    borderBottomLeftRadius: 4,
-  },
+  bubble: { maxWidth: '78%', borderRadius: borderRadius.xl, padding: spacing.sm, paddingHorizontal: spacing.md, gap: 4 },
+  bubbleMine: { alignSelf: 'flex-end', backgroundColor: colors.primaryContainer, borderBottomRightRadius: 4 },
+  bubbleTheirs: { alignSelf: 'flex-start', backgroundColor: colors.surfaceContainerHigh, borderBottomLeftRadius: 4 },
   bubbleText: { fontSize: 14, color: colors.onSurface, lineHeight: 20 },
   bubbleTextMine: { color: colors.white },
   bubbleTime: { fontSize: 10, color: colors.onSurfaceVariant, alignSelf: 'flex-end' },
   bubbleTimeMine: { color: 'rgba(255,255,255,0.6)' },
-
-  inputBar: {
-    flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm,
-    paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
-    borderTopWidth: 1, borderTopColor: colors.outlineVariant + '60',
-    backgroundColor: colors.background,
-  },
-  input: {
-    flex: 1, minHeight: 44, maxHeight: 120,
-    backgroundColor: colors.surfaceContainerHigh,
-    borderRadius: borderRadius.xl, borderWidth: 1, borderColor: colors.outlineVariant,
-    paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
-    color: colors.onSurface, fontSize: 14,
-  },
-  sendBtn: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: colors.primaryContainer,
-    alignItems: 'center', justifyContent: 'center',
-  },
+  inputBar: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderTopWidth: 1, borderTopColor: colors.outlineVariant + '60', backgroundColor: colors.background },
+  input: { flex: 1, minHeight: 44, maxHeight: 120, backgroundColor: colors.surfaceContainerHigh, borderRadius: borderRadius.xl, borderWidth: 1, borderColor: colors.outlineVariant, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, color: colors.onSurface, fontSize: 14 },
+  sendBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primaryContainer, alignItems: 'center', justifyContent: 'center' },
   sendBtnDisabled: { opacity: 0.4 },
 })

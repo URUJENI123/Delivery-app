@@ -48,13 +48,7 @@ export function CourierOnboardingStep2({ navigation }: Props) {
             <Text style={styles.fieldLabel}>NATIONAL ID NUMBER</Text>
             <View style={styles.inputWrapper}>
               <Ionicons name="id-card" size={20} color={colors.outline} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="1 1990 8 0012345 0 99"
-                placeholderTextColor={colors.outline}
-                value={nationalId}
-                onChangeText={setNationalId}
-              />
+              <TextInput style={styles.input} placeholder="1 1990 8 0012345 0 99" placeholderTextColor={colors.outline} value={nationalId} onChangeText={setNationalId} />
             </View>
           </View>
 
@@ -62,13 +56,7 @@ export function CourierOnboardingStep2({ navigation }: Props) {
             <Text style={styles.fieldLabel}>MOTORCYCLE PLATE NUMBER</Text>
             <View style={styles.inputWrapper}>
               <Ionicons name="car" size={20} color={colors.outline} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="RA 000 A"
-                placeholderTextColor={colors.outline}
-                value={plateNumber}
-                onChangeText={setPlateNumber}
-              />
+              <TextInput style={styles.input} placeholder="RA 000 A" placeholderTextColor={colors.outline} value={plateNumber} onChangeText={setPlateNumber} />
             </View>
           </View>
 
@@ -76,14 +64,7 @@ export function CourierOnboardingStep2({ navigation }: Props) {
             <Text style={styles.fieldLabel}>MOMO NUMBER (FOR PAYOUTS)</Text>
             <View style={styles.inputWrapper}>
               <Ionicons name="wallet" size={20} color={colors.outline} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="078 XXX XXXX"
-                placeholderTextColor={colors.outline}
-                value={momoNumber}
-                onChangeText={setMomoNumber}
-                keyboardType="phone-pad"
-              />
+              <TextInput style={styles.input} placeholder="078 XXX XXXX" placeholderTextColor={colors.outline} value={momoNumber} onChangeText={setMomoNumber} keyboardType="phone-pad" />
             </View>
           </View>
 
@@ -91,13 +72,7 @@ export function CourierOnboardingStep2({ navigation }: Props) {
             <Text style={styles.fieldLabel}>JACKET NUMBER</Text>
             <View style={styles.inputWrapper}>
               <Ionicons name="shirt" size={20} color={colors.outline} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="e.g. JKT-001"
-                placeholderTextColor={colors.outline}
-                value={jacketNumber}
-                onChangeText={setJacketNumber}
-              />
+              <TextInput style={styles.input} placeholder="e.g. JKT-001" placeholderTextColor={colors.outline} value={jacketNumber} onChangeText={setJacketNumber} />
             </View>
           </View>
         </View>
@@ -120,150 +95,32 @@ export function CourierOnboardingStep2({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  topBar: {
-    height: 48,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.background,
-    paddingHorizontal: spacing.sm,
-  },
-  backButton: {
-    position: 'absolute',
-    left: spacing.sm,
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-  },
-  logoPlaceholder: {
-    width: 40,
-    height: 40,
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.xxl + spacing.lg,
-    gap: spacing.xl,
-  },
-  progressSection: {
-    gap: spacing.md,
-  },
-  progressLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  stepLabel: {
-    ...typography.labelMd,
-    color: colors.onSurfaceVariant,
-  },
-  verificationLabel: {
-    ...typography.labelMd,
-    color: colors.primary,
-  },
-  progressSegments: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  progressSegment: {
-    flex: 1,
-    height: 4,
-    borderRadius: borderRadius.full,
-  },
-  progressSegmentActive: {
-    backgroundColor: colors.primary,
-  },
-  progressSegmentInactive: {
-    backgroundColor: colors.outlineVariant,
-  },
-  headerSection: {
-    gap: spacing.sm,
-  },
-  title: {
-    ...typography.headlineMd,
-    color: colors.onBackground,
-  },
-  subtitle: {
-    ...typography.bodyMd,
-    color: colors.onSurfaceVariant,
-  },
-  formSection: {
-    gap: spacing.lg,
-  },
-  fieldGroup: {
-    gap: spacing.sm,
-  },
-  fieldLabel: {
-    ...typography.labelMd,
-    color: colors.onSurfaceVariant,
-    textTransform: 'uppercase',
-  },
-  inputWrapper: {
-    position: 'relative',
-    justifyContent: 'center',
-  },
-  inputIcon: {
-    position: 'absolute',
-    left: spacing.md,
-    zIndex: 1,
-  },
-  input: {
-    height: 48,
-    backgroundColor: colors.surfaceContainer,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    borderRadius: borderRadius.lg,
-    paddingLeft: spacing.xxl,
-    paddingRight: spacing.md,
-    color: colors.onSurface,
-    fontFamily: 'Inter',
-    fontSize: 14,
-    fontWeight: '400',
-    lineHeight: 20,
-  },
-  helperCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    padding: spacing.md,
-    backgroundColor: colors.surfaceContainerLow,
-    borderWidth: 1,
-    borderColor: 'rgba(87,65,63,0.3)',
-    borderRadius: borderRadius.xl,
-  },
-  helperText: {
-    ...typography.labelSm,
-    color: colors.onSurfaceVariant,
-    flex: 1,
-  },
-  footer: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: Platform.OS === 'ios' ? 36 : spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(87,65,63,0.1)',
-    backgroundColor: colors.background,
-  },
-  nextButton: {
-    width: '100%',
-    height: 48,
-    backgroundColor: colors.primaryContainer,
-    borderRadius: borderRadius.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  nextButtonText: {
-    ...typography.headlineSm,
-    color: colors.onPrimaryContainer,
-    textTransform: 'uppercase',
-  },
+  container: { flex: 1, backgroundColor: colors.background },
+  topBar: { height: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background, paddingHorizontal: spacing.sm },
+  backButton: { position: 'absolute', left: spacing.sm, width: 40, height: 40, alignItems: 'center', justifyContent: 'center', zIndex: 10 },
+  logoPlaceholder: { width: 40, height: 40 },
+  scroll: { flex: 1 },
+  scrollContent: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.xxl + spacing.lg, gap: spacing.xl },
+  progressSection: { gap: spacing.md },
+  progressLabels: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  stepLabel: { ...typography.labelMd, color: colors.onSurfaceVariant },
+  verificationLabel: { ...typography.labelMd, color: colors.primary },
+  progressSegments: { flexDirection: 'row', gap: spacing.sm },
+  progressSegment: { flex: 1, height: 4, borderRadius: borderRadius.full },
+  progressSegmentActive: { backgroundColor: colors.primary },
+  progressSegmentInactive: { backgroundColor: colors.outlineVariant },
+  headerSection: { gap: spacing.sm },
+  title: { ...typography.headlineMd, color: colors.onBackground },
+  subtitle: { ...typography.bodyMd, color: colors.onSurfaceVariant },
+  formSection: { gap: spacing.lg },
+  fieldGroup: { gap: spacing.sm },
+  fieldLabel: { ...typography.labelMd, color: colors.onSurfaceVariant, textTransform: 'uppercase' },
+  inputWrapper: { position: 'relative', justifyContent: 'center' },
+  inputIcon: { position: 'absolute', left: spacing.md, zIndex: 1 },
+  input: { height: 48, backgroundColor: colors.surfaceContainer, borderWidth: 1, borderColor: colors.outlineVariant, borderRadius: borderRadius.lg, paddingLeft: spacing.xxl, paddingRight: spacing.md, color: colors.onSurface, fontSize: 14 },
+  helperCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, padding: spacing.md, backgroundColor: colors.surfaceContainerLow, borderWidth: 1, borderColor: 'rgba(87,65,63,0.3)', borderRadius: borderRadius.xl },
+  helperText: { ...typography.labelSm, color: colors.onSurfaceVariant, flex: 1 },
+  footer: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: Platform.OS === 'ios' ? 36 : spacing.lg, borderTopWidth: 1, borderTopColor: 'rgba(87,65,63,0.1)', backgroundColor: colors.background },
+  nextButton: { width: '100%', height: 48, backgroundColor: colors.primaryContainer, borderRadius: borderRadius.xl, alignItems: 'center', justifyContent: 'center' },
+  nextButtonText: { ...typography.headlineSm, color: colors.onPrimaryContainer, textTransform: 'uppercase' },
 })

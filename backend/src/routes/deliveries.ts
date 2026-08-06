@@ -32,7 +32,7 @@ router.post('/',
     recipientPhone:     z.string(),
     scheduledPickupAt:  z.string().optional(),
     preferAsap:         z.boolean().optional(),
-    quotedPriceRwf:     z.number().optional(),
+    quotedPriceRwf:     z.number().min(200, 'Minimum price is RWF 200').optional(),
     paymentMethod:      z.string().optional(),
     requiresRecipientOtp: z.boolean().optional(),
   })),
@@ -57,7 +57,10 @@ router.post('/:id/take-job',
 
 router.post('/:id/confirm-agreement',
   authenticate,
-  validateBody(z.object({ agreedPriceRwf: z.number(), agreedDeliveryTime: z.number().optional() })),
+  validateBody(z.object({
+    agreedPriceRwf:     z.number().min(200, 'Minimum agreed price is RWF 200'),
+    agreedDeliveryTime: z.number().int().min(1).max(120).optional(),
+  })),
   ctrl.confirmAgreement,
 );
 
@@ -97,7 +100,11 @@ router.put('/:id/cancel', authenticate, requireRole(UserRole.SENDER), ctrl.cance
 router.get('/:id/chat',  authenticate, chatCtrl.getMessages);
 router.post('/:id/chat',
   authenticate,
-  validateBody(z.object({ body: z.string().min(1), photoUrl: z.string().url().optional() })),
+  validateBody(z.object({
+    body:     z.string().min(1).optional(),
+    content:  z.string().min(1).optional(),
+    photoUrl: z.string().url().optional(),
+  }).refine(d => d.body || d.content, { message: 'body or content is required' })),
   chatCtrl.sendMessage,
 );
 

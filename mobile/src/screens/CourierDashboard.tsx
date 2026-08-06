@@ -274,33 +274,10 @@ export function CourierDashboard({}: Props) {
               pitchEnabled={false}
               rotateEnabled={false}
             >
-              {/* High demand zones */}
-              <Circle
-                center={{ latitude: -1.9355, longitude: 30.0930 }}
-                radius={600}
-                fillColor="rgba(137,32,32,0.3)"
-                strokeColor="rgba(137,32,32,0.6)"
-                strokeWidth={1}
-              />
-              <Circle
-                center={{ latitude: -1.9593, longitude: 30.1043 }}
-                radius={400}
-                fillColor="rgba(255,140,0,0.2)"
-                strokeColor="rgba(255,140,0,0.5)"
-                strokeWidth={1}
-              />
-              <Circle
-                center={{ latitude: -1.9470, longitude: 30.0587 }}
-                radius={500}
-                fillColor="rgba(137,32,32,0.2)"
-                strokeColor="rgba(137,32,32,0.4)"
-                strokeWidth={1}
-              />
-              {/* Demand hotspot marker */}
-              <Marker
-                coordinate={{ latitude: -1.9355, longitude: 30.0930 }}
-                anchor={{ x: 0.5, y: 0.5 }}
-              >
+              <Circle center={{ latitude: -1.9355, longitude: 30.0930 }} radius={600} fillColor="rgba(137,32,32,0.3)" strokeColor="rgba(137,32,32,0.6)" strokeWidth={1} />
+              <Circle center={{ latitude: -1.9593, longitude: 30.1043 }} radius={400} fillColor="rgba(255,140,0,0.2)" strokeColor="rgba(255,140,0,0.5)" strokeWidth={1} />
+              <Circle center={{ latitude: -1.9470, longitude: 30.0587 }} radius={500} fillColor="rgba(137,32,32,0.2)" strokeColor="rgba(137,32,32,0.4)" strokeWidth={1} />
+              <Marker coordinate={{ latitude: -1.9355, longitude: 30.0930 }} anchor={{ x: 0.5, y: 0.5 }}>
                 <View style={styles.hotspotMarker}>
                   <Ionicons name="flame" size={12} color={colors.onPrimary} />
                 </View>
@@ -323,37 +300,13 @@ export function CourierDashboard({}: Props) {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
-
-  topBar: {
-    height: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-  },
-  topBarLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  menuBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  topBar: { height: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.lg },
   logoImg: { width: 60, height: 24 },
-  profileBtn: {
-    width: 40, height: 40, borderRadius: borderRadius.full,
-    borderWidth: 2, borderColor: 'rgba(255,179,173,0.2)', overflow: 'hidden',
-  },
+  profileBtn: { width: 40, height: 40, borderRadius: borderRadius.full, borderWidth: 2, borderColor: 'rgba(255,179,173,0.2)', overflow: 'hidden' },
   profileImg: { width: 40, height: 40 },
-
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: spacing.lg, paddingBottom: 100, gap: spacing.lg },
-
-  // Status card
-  statusCard: {
-    backgroundColor: 'rgba(41,29,28,0.6)',
-    borderRadius: borderRadius.xl,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.error,
-    borderWidth: 1,
-    borderColor: 'rgba(255,179,173,0.1)',
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
+  statusCard: { backgroundColor: 'rgba(41,29,28,0.6)', borderRadius: borderRadius.xl, borderLeftWidth: 4, borderLeftColor: colors.error, borderWidth: 1, borderColor: 'rgba(255,179,173,0.1)', padding: spacing.lg, gap: spacing.md },
   statusCardOnline: { borderLeftColor: '#4ADE80' },
   statusCardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   welcomeText: { fontSize: 20, fontWeight: '600', color: colors.onSurface },
@@ -362,77 +315,38 @@ const styles = StyleSheet.create({
   statusDotOnline: { backgroundColor: '#4ADE80' },
   statusDotOffline: { backgroundColor: colors.error },
   statusLabel: { fontSize: 11, fontWeight: '700', color: colors.onSurfaceVariant, letterSpacing: 1, textTransform: 'uppercase' },
-
-  toggleTrack: {
-    width: 60, height: 30, borderRadius: 15,
-    backgroundColor: colors.surfaceContainerHighest,
-    position: 'relative', justifyContent: 'center',
-  },
+  toggleTrack: { width: 60, height: 30, borderRadius: 15, backgroundColor: colors.surfaceContainerHighest, position: 'relative', justifyContent: 'center' },
   toggleTrackOn: { backgroundColor: colors.primaryContainer },
-  toggleThumb: {
-    position: 'absolute', width: 24, height: 24, borderRadius: 12,
-    backgroundColor: colors.onSurfaceVariant,
-    alignItems: 'center', justifyContent: 'center',
-  },
-
-  goOnlineBtn: {
-    height: 48, borderRadius: borderRadius.lg,
-    backgroundColor: colors.surfaceContainerHigh,
-    borderWidth: 1, borderColor: 'rgba(87,65,63,0.3)',
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm,
-  },
+  toggleThumb: { position: 'absolute', width: 24, height: 24, borderRadius: 12, backgroundColor: colors.onSurfaceVariant, alignItems: 'center', justifyContent: 'center' },
+  goOnlineBtn: { height: 48, borderRadius: borderRadius.lg, backgroundColor: colors.surfaceContainerHigh, borderWidth: 1, borderColor: 'rgba(87,65,63,0.3)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
   goOnlineBtnActive: { backgroundColor: colors.primaryContainer },
   goOnlineBtnText: { fontSize: 12, fontWeight: '700', color: colors.onSurfaceVariant, letterSpacing: 1, textTransform: 'uppercase' },
   goOnlineBtnTextActive: { color: colors.primary },
-
   statusHint: { fontSize: 13, color: colors.onSurfaceVariant, opacity: 0.6, textAlign: 'center', fontStyle: 'italic' },
-
-  // Earnings
   earningsRow: { flexDirection: 'row', gap: spacing.md },
-  earningCard: {
-    flex: 1, backgroundColor: colors.surfaceContainerLow,
-    borderRadius: borderRadius.xl, borderWidth: 1, borderColor: 'rgba(87,65,63,0.3)',
-    padding: spacing.md, gap: 4,
-  },
+  earningCard: { flex: 1, backgroundColor: colors.surfaceContainerLow, borderRadius: borderRadius.xl, borderWidth: 1, borderColor: 'rgba(87,65,63,0.3)', padding: spacing.md, gap: 4 },
   earningLabel: { fontSize: 10, fontWeight: '600', color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.5 },
   earningValueRow: { flexDirection: 'row', alignItems: 'baseline', gap: 4, marginTop: 4 },
   earningValue: { fontSize: 22, fontWeight: '600', color: colors.primary },
   earningCurrency: { fontSize: 11, color: colors.onSurfaceVariant },
   earningTrend: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
   earningTrendText: { fontSize: 10, fontWeight: '700', color: '#4ADE80' },
-  deliveriesBar: {
-    height: 4, backgroundColor: colors.surfaceContainerHigh,
-    borderRadius: borderRadius.full, marginTop: 8, overflow: 'hidden',
-  },
+  deliveriesBar: { height: 4, backgroundColor: colors.surfaceContainerHigh, borderRadius: borderRadius.full, marginTop: 8, overflow: 'hidden' },
   deliveriesBarFill: { width: '80%', height: 4, backgroundColor: colors.primary, borderRadius: borderRadius.full },
-
-  // Section
   section: { gap: spacing.sm },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitle: { fontSize: 16, fontWeight: '600', color: colors.onSurface },
   liveText: { fontSize: 11, fontWeight: '700', color: colors.primary, letterSpacing: 0.5 },
-  viewToggle: {
-    flexDirection: 'row', padding: 4,
-    backgroundColor: colors.surfaceContainerHigh,
-    borderRadius: borderRadius.full, gap: 2,
-  },
+  viewToggle: { flexDirection: 'row', padding: 4, backgroundColor: colors.surfaceContainerHigh, borderRadius: borderRadius.full, gap: 2 },
   viewToggleActive: { paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: borderRadius.full, backgroundColor: colors.primary },
   viewToggleActiveText: { fontSize: 11, fontWeight: '700', color: colors.onPrimary },
   viewToggleInactive: { paddingHorizontal: spacing.md, paddingVertical: 6 },
   viewToggleInactiveText: { fontSize: 11, fontWeight: '700', color: colors.onSurfaceVariant },
-
-  // Job cards
-  jobCard: {
-    backgroundColor: colors.surfaceContainer, borderRadius: borderRadius.xl,
-    borderWidth: 1, borderColor: colors.outlineVariant, overflow: 'hidden',
-  },
+  jobCard: { backgroundColor: colors.surfaceContainer, borderRadius: borderRadius.xl, borderWidth: 1, borderColor: colors.outlineVariant, overflow: 'hidden' },
   jobCardDim: { opacity: 0.9 },
   jobCardInner: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', padding: spacing.md, paddingBottom: spacing.sm },
   jobLeft: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, flex: 1 },
-  jobIconWrap: {
-    width: 40, height: 40, borderRadius: borderRadius.lg,
-    backgroundColor: 'rgba(137,32,32,0.3)', alignItems: 'center', justifyContent: 'center',
-  },
+  jobIconWrap: { width: 40, height: 40, borderRadius: borderRadius.lg, backgroundColor: 'rgba(137,32,32,0.3)', alignItems: 'center', justifyContent: 'center' },
   jobInfo: { flex: 1, gap: 2 },
   jobCategory: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
   jobRoute: { fontSize: 15, fontWeight: '600', color: colors.onSurface },
@@ -440,56 +354,22 @@ const styles = StyleSheet.create({
   jobPayout: { fontSize: 20, fontWeight: '600', color: colors.primary },
   jobPayoutMuted: { color: colors.onSurface },
   jobPayoutCurrency: { fontSize: 10, color: colors.onSurfaceVariant, textTransform: 'uppercase' },
-
-  jobDetails: {
-    paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
-    backgroundColor: 'rgba(27,17,16,0.4)',
-    borderRadius: borderRadius.lg, marginHorizontal: spacing.md, gap: spacing.xs,
-  },
+  jobDetails: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, backgroundColor: 'rgba(27,17,16,0.4)', borderRadius: borderRadius.lg, marginHorizontal: spacing.md, gap: spacing.xs },
   jobDetailRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   jobDetailText: { fontSize: 13, color: colors.onSurface },
   jobDetailBold: { fontWeight: '700' },
-
   jobMeta: { flexDirection: 'row', gap: spacing.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, justifyContent: 'space-between' },
   jobMetaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   jobMetaText: { fontSize: 12, color: colors.onSurfaceVariant },
   jobExpiringText: { fontSize: 10, fontWeight: '700', color: colors.onSurfaceVariant, textTransform: 'uppercase' },
-
-  acceptBtn: {
-    height: 52, backgroundColor: colors.primary,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm,
-  },
+  acceptBtn: { height: 52, backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
   acceptBtnSecondary: { backgroundColor: colors.surfaceContainerHigh },
   acceptBtnText: { fontSize: 13, fontWeight: '700', color: colors.onPrimary, letterSpacing: 0.5, textTransform: 'uppercase' },
   acceptBtnTextSecondary: { color: colors.onSurface },
-
-  // Map
-  mapCard: {
-    height: 180, borderRadius: borderRadius.xl,
-    borderWidth: 1, borderColor: 'rgba(87,65,63,0.3)',
-    overflow: 'hidden', position: 'relative',
-  },
-  mapView: {
-    width: '100%',
-    height: 180,
-  },
-  hotspotMarker: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.primaryContainer,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mapBadge: {
-    position: 'absolute', bottom: spacing.md, left: spacing.md, right: spacing.md,
-    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-    backgroundColor: 'rgba(27,17,16,0.85)',
-    paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
-    borderRadius: borderRadius.lg, borderWidth: 1, borderColor: 'rgba(255,179,173,0.2)',
-  },
+  mapCard: { height: 180, borderRadius: borderRadius.xl, borderWidth: 1, borderColor: 'rgba(87,65,63,0.3)', overflow: 'hidden', position: 'relative' },
+  mapView: { width: '100%', height: 180 },
+  hotspotMarker: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.primaryContainer, borderWidth: 2, borderColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  mapBadge: { position: 'absolute', bottom: spacing.md, left: spacing.md, right: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: 'rgba(27,17,16,0.85)', paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: borderRadius.lg, borderWidth: 1, borderColor: 'rgba(255,179,173,0.2)' },
   mapBadgeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
   mapBadgeTitle: { fontSize: 12, color: colors.onSurface },
   mapBadgeAccent: { color: colors.primary, fontWeight: '600' },

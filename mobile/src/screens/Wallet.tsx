@@ -38,10 +38,7 @@ export function Wallet({ navigation }: Props) {
           <Text style={styles.balanceSubLabel}>CURRENT BALANCE</Text>
           <Text style={styles.balanceValue}>RWF 45,800</Text>
           <View style={styles.balanceActions}>
-            <TouchableOpacity
-              style={styles.withdrawBtn}
-              onPress={() => navigation.navigate('ConfirmWithdraw')}
-            >
+            <TouchableOpacity style={styles.withdrawBtn} onPress={() => navigation.navigate('ConfirmWithdraw')}>
               <Ionicons name="wallet-outline" size={20} color={colors.white} />
               <Text style={styles.withdrawBtnText}>Withdraw</Text>
             </TouchableOpacity>
@@ -56,16 +53,10 @@ export function Wallet({ navigation }: Props) {
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Earnings Overview</Text>
             <View style={styles.periodToggle}>
-              <TouchableOpacity
-                style={[styles.periodBtn, period === 'daily' ? styles.periodBtnActive : undefined]}
-                onPress={() => setPeriod('daily')}
-              >
+              <TouchableOpacity style={[styles.periodBtn, period === 'daily' ? styles.periodBtnActive : undefined]} onPress={() => setPeriod('daily')}>
                 <Text style={[styles.periodBtnText, period === 'daily' ? styles.periodBtnTextActive : undefined]}>Daily</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.periodBtn, period === 'weekly' ? styles.periodBtnActive : undefined]}
-                onPress={() => setPeriod('weekly')}
-              >
+              <TouchableOpacity style={[styles.periodBtn, period === 'weekly' ? styles.periodBtnActive : undefined]} onPress={() => setPeriod('weekly')}>
                 <Text style={[styles.periodBtnText, period === 'weekly' ? styles.periodBtnTextActive : undefined]}>Weekly</Text>
               </TouchableOpacity>
             </View>
@@ -76,11 +67,7 @@ export function Wallet({ navigation }: Props) {
             {days.map((day, i) => (
               <View key={day} style={styles.chartCol}>
                 <View style={styles.chartBarWrap}>
-                  <View style={[
-                    styles.chartBar,
-                    { height: `${heights[i]}%` as any },
-                    i === 3 ? styles.chartBarActive : undefined,
-                  ]} />
+                  <View style={[styles.chartBar, { height: `${heights[i]}%` as any }, i === 3 ? styles.chartBarActive : undefined]} />
                 </View>
                 <Text style={[styles.chartLabel, i === 3 ? styles.chartLabelActive : undefined]}>{day}</Text>
               </View>
@@ -115,25 +102,16 @@ export function Wallet({ navigation }: Props) {
         </View>
 
         {transactions.map((tx) => (
-          <View
-            key={tx.id}
-            style={[styles.txCard, { borderLeftColor: tx.positive ? colors.primary : colors.outlineVariant }]}
-          >
+          <View key={tx.id} style={[styles.txCard, { borderLeftColor: tx.positive ? colors.primary : colors.outlineVariant }]}>
             <View style={styles.txIconWrap}>
-              <Ionicons
-                name={tx.type === 'delivery' ? 'bicycle-outline' : 'cash-outline'}
-                size={20}
-                color={tx.positive ? colors.primary : colors.onSurfaceVariant}
-              />
+              <Ionicons name={tx.type === 'delivery' ? 'bicycle-outline' : 'cash-outline'} size={20} color={tx.positive ? colors.primary : colors.onSurfaceVariant} />
             </View>
             <View style={styles.txContent}>
               <Text style={styles.txLabel}>{tx.label}</Text>
               <Text style={styles.txDate}>{tx.date}</Text>
             </View>
             <View style={styles.txRight}>
-              <Text style={[styles.txAmount, { color: tx.positive ? colors.primary : colors.onSurface }]}>
-                {tx.amount}
-              </Text>
+              <Text style={[styles.txAmount, { color: tx.positive ? colors.primary : colors.onSurface }]}>{tx.amount}</Text>
               <Text style={[styles.txStatus, { color: tx.statusColor }]}>{tx.status}</Text>
             </View>
           </View>
@@ -147,21 +125,14 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   topBar: { height: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.lg },
   headerTitle: { fontSize: 16, fontWeight: '700', color: colors.primary, letterSpacing: 1 },
-
   content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: 40 },
-
-  balanceCard: {
-    backgroundColor: 'rgba(41,29,28,0.6)', borderRadius: borderRadius.xl,
-    borderWidth: 1, borderColor: 'rgba(87,65,63,0.5)',
-    padding: spacing.lg, gap: spacing.md,
-  },
+  balanceCard: { backgroundColor: 'rgba(41,29,28,0.6)', borderRadius: borderRadius.xl, borderWidth: 1, borderColor: 'rgba(87,65,63,0.5)', padding: spacing.lg, gap: spacing.md },
   balanceSubLabel: { fontSize: 11, fontWeight: '600', letterSpacing: 2, color: colors.onSurfaceVariant, textTransform: 'uppercase' },
   balanceValue: { fontSize: 32, fontWeight: '700', color: colors.white },
   balanceActions: { flexDirection: 'row', gap: spacing.sm },
   withdrawBtn: { flex: 1, height: 48, backgroundColor: colors.primaryContainer, borderRadius: borderRadius.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
   withdrawBtnText: { fontSize: 14, fontWeight: '600', color: colors.white },
   addBtn: { width: 48, height: 48, borderRadius: borderRadius.lg, borderWidth: 1, borderColor: colors.outlineVariant, alignItems: 'center', justifyContent: 'center' },
-
   card: { backgroundColor: 'rgba(41,29,28,0.6)', borderRadius: borderRadius.xl, borderWidth: 1, borderColor: 'rgba(87,65,63,0.5)', padding: spacing.lg, gap: spacing.lg },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   cardTitle: { fontSize: 16, fontWeight: '600', color: colors.onSurface },
@@ -170,7 +141,6 @@ const styles = StyleSheet.create({
   periodBtnActive: { backgroundColor: colors.primaryContainer },
   periodBtnText: { fontSize: 11, fontWeight: '700', color: colors.onSurfaceVariant },
   periodBtnTextActive: { color: colors.onPrimaryContainer },
-
   chart: { flexDirection: 'row', alignItems: 'flex-end', height: 112, gap: spacing.xs },
   chartCol: { flex: 1, alignItems: 'center', gap: 6 },
   chartBarWrap: { flex: 1, width: '100%', justifyContent: 'flex-end' },
@@ -178,17 +148,14 @@ const styles = StyleSheet.create({
   chartBarActive: { backgroundColor: colors.primaryContainer },
   chartLabel: { fontSize: 9, color: colors.onSurfaceVariant },
   chartLabelActive: { fontWeight: '700', color: colors.primary },
-
   statsRow: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.outlineVariant, paddingTop: spacing.md },
   statItem: { flex: 1, alignItems: 'center', gap: 4 },
   statSubLabel: { fontSize: 9, textTransform: 'uppercase', color: colors.onSurfaceVariant, letterSpacing: 0.5 },
   statValue: { fontSize: 18, fontWeight: '600', color: colors.primary },
   statDivider: { width: 1, backgroundColor: colors.outlineVariant },
-
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitle: { fontSize: 16, fontWeight: '600', color: colors.onSurface },
   viewAll: { fontSize: 13, fontWeight: '600', color: colors.primary },
-
   txCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.surfaceContainer, borderRadius: borderRadius.lg, padding: spacing.md, borderLeftWidth: 4 },
   txIconWrap: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(137,32,32,0.2)', alignItems: 'center', justifyContent: 'center' },
   txContent: { flex: 1, gap: 2 },

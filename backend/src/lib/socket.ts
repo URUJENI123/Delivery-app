@@ -76,4 +76,14 @@ export class DeliveryGateway {
   emitMessageNew(deliveryId: string, message: unknown) {
     this.io.to(`delivery:${deliveryId}`).emit('message:new', message);
   }
+
+  /** Notify a specific user regardless of which delivery room they're in */
+  emitToUser(userId: string, event: string, data: unknown) {
+    this.io.to(`courier:${userId}`).emit(event, data);
+  }
+
+  /** Notify sender that broadcast is live */
+  emitBroadcastStarted(deliveryId: string, data: unknown) {
+    this.io.to(`delivery:${deliveryId}`).emit('delivery:status', data);
+  }
 }

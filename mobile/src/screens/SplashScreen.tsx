@@ -68,21 +68,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accentPeach,
     opacity: 0.15,
   },
-  divider1: {
-    top: 177,
-    left: -50,
-    width: 200,
-  },
-  divider2: {
-    top: 442,
-    left: 140,
-    width: 300,
-  },
-  divider3: {
-    top: 707,
-    left: 39,
-    width: 150,
-  },
+  divider1: { top: 177, left: -50, width: 200 },
+  divider2: { top: 442, left: 140, width: 300 },
+  divider3: { top: 707, left: 39, width: 150 },
   centerContent: {
     alignItems: 'center',
     gap: 24,

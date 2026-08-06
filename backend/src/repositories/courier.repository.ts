@@ -53,11 +53,12 @@ export function findOnline() {
 export function findMany(
   where?: Prisma.CourierWhereInput,
   include?: Prisma.CourierInclude,
+  orderBy?: Prisma.CourierOrderByWithRelationInput,
 ) {
   return prisma.courier.findMany({
     where,
     include: include as any,
-    orderBy: { createdAt: 'desc' },
+    orderBy: orderBy ?? { createdAt: 'desc' },
   });
 }
 

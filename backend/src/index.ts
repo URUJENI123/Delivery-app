@@ -14,6 +14,8 @@ import { errorHandler } from './middleware/errorHandler';
 import { DeliveryGateway } from './lib/socket';
 import { setGateway as setDeliveriesGateway } from './services/deliveries';
 import { setGateway as setChatGateway } from './services/chat';
+import { setGateway as setAdminGateway } from './services/admin';
+import { setGateway as setCouriersGateway } from './services/couriers';
 import prisma from './lib/prisma';
 
 import authRoutes     from './routes/auth';
@@ -26,6 +28,7 @@ import storageRoutes  from './routes/storage';
 import trackingRoutes from './routes/tracking';
 import userRoutes     from './routes/users';
 import chatRoutes     from './routes/chat';
+import geocodingRoutes from './routes/geocoding';
 
 const app        = express();
 const httpServer = createServer(app);
@@ -41,6 +44,8 @@ const io = new Server(httpServer, {
 const gateway = new DeliveryGateway(io);
 setDeliveriesGateway(gateway);
 setChatGateway(gateway);
+setAdminGateway(gateway);
+setCouriersGateway(gateway);
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(
@@ -73,6 +78,7 @@ app.use(`${v1}/storage`,     storageRoutes);
 app.use(`${v1}/track`,       trackingRoutes);
 app.use(`${v1}/users`,       userRoutes);
 app.use(`${v1}/chat`,        chatRoutes);
+app.use(`${v1}/geocode`,     geocodingRoutes);
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));

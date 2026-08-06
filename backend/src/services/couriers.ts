@@ -1,7 +1,12 @@
 import * as courierRepo from '../repositories/courier.repository';
 import * as userRepo    from '../repositories/user.repository';
+import * as efficiency  from './efficiency';
 import { NotFoundError, BadRequestError } from '../lib/errors';
 import { UserRole } from '../types';
+import type { DeliveryGateway } from '../lib/socket';
+
+let gateway: DeliveryGateway | null = null;
+export function setGateway(gw: DeliveryGateway) { gateway = gw; }
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R    = 6371;
@@ -107,18 +112,42 @@ export async function updateLocation(
   if (!courier) throw new NotFoundError('Courier profile not found');
 
   const updated = await courierRepo.update(userId, {
-    currentLat:    dto.lat,
-    currentLng:    dto.lng,
+    currentLat:     dto.lat,
+    currentLng:     dto.lng,
     lastLocationAt: new Date(),
   });
   await courierRepo.createLocation({
-    courier:    { connect: { id: courier.id } },
-    lat:        dto.lat,
-    lng:        dto.lng,
-    accuracy:   dto.accuracy ?? null,
-    heading:    dto.heading  ?? null,
-    speed:      dto.speed    ?? null,
+    courier:  { connect: { id: courier.id } },
+    lat:      dto.lat,
+    lng:      dto.lng,
+    accuracy: dto.accuracy ?? null,
+    heading:  dto.heading  ?? null,
+    speed:    dto.speed    ?? null,
   } as any);
+
+  // Relay live location to the active delivery room so the sender / tracking
+  // page sees courier movement without the courier having to join that room manually.
+  const { default: prisma } = await import('../lib/prisma');
+  const activeDelivery = await prisma.delivery.findFirst({
+    where: {
+      courierId: courier.id,
+      status: { in: ['PICKUP_EN_ROUTE','ARRIVED_PICKUP','PICKED_UP','IN_TRANSIT','ARRIVED_DROPOFF'] as any },
+    },
+    select: { id: true },
+  });
+  if (activeDelivery) {
+    // Emit to the delivery room so sender / tracking page sees live movement
+    gateway?.emitDeliveryStatus(activeDelivery.id, {
+      type:       'LOCATION_UPDATE',
+      deliveryId: activeDelivery.id,
+      lat:        dto.lat,
+      lng:        dto.lng,
+      accuracy:   dto.accuracy,
+      heading:    dto.heading,
+      speed:      dto.speed,
+      timestamp:  new Date().toISOString(),
+    });
+  }
 
   return updated;
 }
@@ -128,10 +157,14 @@ export async function updateLocation(
 export async function getJobs(userId: string) {
   const courier = await courierRepo.findByUserId(userId);
   if (!courier) throw new NotFoundError('Courier profile not found');
-  return courierRepo.findMany(
-    { id: courier.id },
-    // Prisma doesn't expose delivery relation here — handled in delivery repo
-  );
+  const { default: prisma } = await import('../lib/prisma');
+  return prisma.delivery.findMany({
+    where:   { courierId: courier.id },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      sender: { select: { id: true, fullName: true, phone: true } },
+    },
+  });
 }
 
 export async function getEarnings(userId: string) {
@@ -190,4 +223,12 @@ export async function findNearby(lat: number, lng: number, radiusKm = 5) {
     (c) => c.currentLat !== null && c.currentLng !== null &&
       haversineKm(lat, lng, c.currentLat!, c.currentLng!) <= radiusKm,
   );
+}
+
+// ─── Efficiency stats (for courier profile & admin panel) ────────────────────
+
+export async function getEfficiencyStats(userId: string) {
+  const stats = await efficiency.getCourierStats(userId);
+  if (!stats) throw new NotFoundError('Courier profile not found');
+  return stats;
 }

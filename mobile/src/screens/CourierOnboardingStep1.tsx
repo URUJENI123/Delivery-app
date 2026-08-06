@@ -32,8 +32,7 @@ export function CourierOnboardingStep1({ navigation, route }: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* Top bar */}
-        <View style={styles.topBar}>
-        </View>
+        <View style={styles.topBar} />
 
         <ScrollView
           style={styles.scroll}
@@ -54,7 +53,6 @@ export function CourierOnboardingStep1({ navigation, route }: Props) {
 
           {/* Form card */}
           <View style={styles.formCard}>
-            {/* Card header */}
             <View style={styles.formCardHeader}>
               <View style={styles.iconContainer}>
                 <Ionicons name="person-outline" size={20} color={colors.onPrimaryContainer} />
@@ -65,7 +63,6 @@ export function CourierOnboardingStep1({ navigation, route }: Props) {
               </View>
             </View>
 
-            {/* Fields */}
             <View style={styles.formFields}>
               <View style={styles.fieldGroup}>
                 <Text style={styles.fieldLabel}>Full Name</Text>
@@ -139,7 +136,6 @@ export function CourierOnboardingStep1({ navigation, route }: Props) {
               </View>
             </View>
 
-            {/* Trust badge */}
             <View style={styles.trustBadge}>
               <Ionicons name="shield-checkmark-outline" size={16} color={colors.onSurfaceVariant} />
               <Text style={styles.trustText}>End-to-end encrypted data protection</Text>
@@ -176,230 +172,41 @@ export function CourierOnboardingStep1({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  flex: {
-    flex: 1,
-  },
-
-  // Top bar
-  topBar: {
-    height: 48,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-  },
-
-  // Scroll
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.xxl,
-  },
-
-  // Progress
-  progressSection: {
-    marginBottom: spacing.xl,
-  },
-  progressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  registrationTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.onSurface,
-    letterSpacing: 0.5,
-  },
-  stepLabel: {
-    ...typography.labelMd,
-    color: colors.primary,
-  },
-  progressTrack: {
-    height: 4,
-    width: '100%',
-    backgroundColor: colors.surfaceContainerHigh,
-    borderRadius: borderRadius.full,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    width: '33%',
-    height: '100%',
-    backgroundColor: colors.primaryContainer,
-    borderRadius: borderRadius.full,
-  },
-
-  // Form card
-  formCard: {
-    backgroundColor: colors.surfaceContainer,
-    borderRadius: borderRadius.xl,
-    padding: spacing.lg,
-    gap: spacing.lg,
-  },
-  formCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    backgroundColor: colors.primaryContainer,
-    borderRadius: borderRadius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  formTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.onSurface,
-  },
-  formSubtitle: {
-    ...typography.labelSm,
-    color: colors.onSurfaceVariant,
-    marginTop: 2,
-  },
-
-  // Fields
-  formFields: {
-    gap: spacing.md,
-  },
-  fieldGroup: {
-    gap: spacing.xs,
-  },
-  fieldLabel: {
-    ...typography.labelMd,
-    color: colors.onSurfaceVariant,
-  },
-  input: {
-    height: 48,
-    backgroundColor: colors.surfaceContainerLow,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.md,
-    color: colors.onSurface,
-    fontSize: 15,
-  },
-  phoneWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 48,
-    backgroundColor: colors.surfaceContainerLow,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    borderRadius: borderRadius.lg,
-    overflow: 'hidden',
-  },
-  phonePrefix: {
-    paddingHorizontal: spacing.md,
-    justifyContent: 'center',
-    height: '100%',
-  },
-  phonePrefixText: {
-    fontSize: 15,
-    color: colors.onSurface,
-    fontWeight: '500',
-  },
-  phoneDivider: {
-    width: 1,
-    height: '60%',
-    backgroundColor: colors.outlineVariant,
-  },
-  phoneInput: {
-    flex: 1,
-    paddingHorizontal: spacing.md,
-    color: colors.onSurface,
-    fontSize: 15,
-    height: '100%',
-  },
-  passwordWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 48,
-    backgroundColor: colors.surfaceContainerLow,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    borderRadius: borderRadius.lg,
-  },
-  passwordInput: {
-    flex: 1,
-    paddingHorizontal: spacing.md,
-    color: colors.onSurface,
-    fontSize: 15,
-    height: '100%',
-  },
-  eyeBtn: {
-    paddingHorizontal: spacing.md,
-    height: '100%',
-    justifyContent: 'center',
-  },
-  passwordHint: {
-    fontSize: 11,
-    lineHeight: 16,
-    color: colors.onSurfaceVariant,
-    opacity: 0.8,
-  },
-
-  // Trust badge
-  trustBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: colors.outlineVariant,
-    borderRadius: borderRadius.lg,
-  },
-  trustText: {
-    ...typography.labelSm,
-    color: colors.onSurfaceVariant,
-  },
-
-  // Bottom bar
-  bottomBar: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    gap: spacing.sm,
-    backgroundColor: colors.background,
-    borderTopWidth: 1,
-    borderTopColor: colors.outlineVariant + '30',
-  },
-  nextButton: {
-    height: 52,
-    backgroundColor: colors.primaryContainer,
-    borderRadius: borderRadius.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-  },
-  nextButtonText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.white,
-    letterSpacing: 1,
-  },
-  loginRow: {
-    alignItems: 'center',
-    paddingVertical: spacing.xs,
-  },
-  loginText: {
-    ...typography.bodyMd,
-    color: colors.onSurfaceVariant,
-  },
-  loginLink: {
-    color: colors.primary,
-    fontWeight: '600',
-  },
+  safeArea: { flex: 1, backgroundColor: colors.background },
+  flex: { flex: 1 },
+  topBar: { height: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md },
+  scroll: { flex: 1 },
+  scrollContent: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.xxl },
+  progressSection: { marginBottom: spacing.xl },
+  progressHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm },
+  registrationTitle: { fontSize: 22, fontWeight: '800', color: colors.onSurface, letterSpacing: 0.5 },
+  stepLabel: { ...typography.labelMd, color: colors.primary },
+  progressTrack: { height: 4, width: '100%', backgroundColor: colors.surfaceContainerHigh, borderRadius: borderRadius.full, overflow: 'hidden' },
+  progressFill: { width: '33%', height: '100%', backgroundColor: colors.primaryContainer, borderRadius: borderRadius.full },
+  formCard: { backgroundColor: colors.surfaceContainer, borderRadius: borderRadius.xl, padding: spacing.lg, gap: spacing.lg },
+  formCardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  iconContainer: { width: 40, height: 40, backgroundColor: colors.primaryContainer, borderRadius: borderRadius.lg, alignItems: 'center', justifyContent: 'center' },
+  formTitle: { fontSize: 18, fontWeight: '700', color: colors.onSurface },
+  formSubtitle: { ...typography.labelSm, color: colors.onSurfaceVariant, marginTop: 2 },
+  formFields: { gap: spacing.md },
+  fieldGroup: { gap: spacing.xs },
+  fieldLabel: { ...typography.labelMd, color: colors.onSurfaceVariant },
+  input: { height: 48, backgroundColor: colors.surfaceContainerLow, borderWidth: 1, borderColor: colors.outlineVariant, borderRadius: borderRadius.lg, paddingHorizontal: spacing.md, color: colors.onSurface, fontSize: 15 },
+  phoneWrapper: { flexDirection: 'row', alignItems: 'center', height: 48, backgroundColor: colors.surfaceContainerLow, borderWidth: 1, borderColor: colors.outlineVariant, borderRadius: borderRadius.lg, overflow: 'hidden' },
+  phonePrefix: { paddingHorizontal: spacing.md, justifyContent: 'center', height: '100%' },
+  phonePrefixText: { fontSize: 15, color: colors.onSurface, fontWeight: '500' },
+  phoneDivider: { width: 1, height: '60%', backgroundColor: colors.outlineVariant },
+  phoneInput: { flex: 1, paddingHorizontal: spacing.md, color: colors.onSurface, fontSize: 15, height: '100%' },
+  passwordWrapper: { flexDirection: 'row', alignItems: 'center', height: 48, backgroundColor: colors.surfaceContainerLow, borderWidth: 1, borderColor: colors.outlineVariant, borderRadius: borderRadius.lg },
+  passwordInput: { flex: 1, paddingHorizontal: spacing.md, color: colors.onSurface, fontSize: 15, height: '100%' },
+  eyeBtn: { paddingHorizontal: spacing.md, height: '100%', justifyContent: 'center' },
+  passwordHint: { fontSize: 11, lineHeight: 16, color: colors.onSurfaceVariant, opacity: 0.8 },
+  trustBadge: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, paddingVertical: spacing.md, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.outlineVariant, borderRadius: borderRadius.lg },
+  trustText: { ...typography.labelSm, color: colors.onSurfaceVariant },
+  bottomBar: { paddingHorizontal: spacing.lg, paddingVertical: spacing.md, gap: spacing.sm, backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.outlineVariant + '30' },
+  nextButton: { height: 52, backgroundColor: colors.primaryContainer, borderRadius: borderRadius.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
+  nextButtonText: { fontSize: 15, fontWeight: '700', color: colors.white, letterSpacing: 1 },
+  loginRow: { alignItems: 'center', paddingVertical: spacing.xs },
+  loginText: { ...typography.bodyMd, color: colors.onSurfaceVariant },
+  loginLink: { color: colors.primary, fontWeight: '600' },
 })

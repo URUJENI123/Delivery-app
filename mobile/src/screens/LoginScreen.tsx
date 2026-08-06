@@ -143,16 +143,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: 48,
   },
-
   logoArea: { alignItems: 'center', marginBottom: 32 },
   logoImage: { width: 160, height: 70 },
-
   heroArea: { alignItems: 'center', marginBottom: 40, gap: spacing.sm },
   heroTitle: { fontSize: 44, fontWeight: '800', color: colors.primary, letterSpacing: 3 },
   heroSubtitle: { fontSize: 16, fontWeight: '400', color: colors.onSurfaceVariant, textAlign: 'center' },
-
   form: { width: '100%', gap: 20 },
-
   fieldBlock: { gap: spacing.sm },
   fieldLabel: { fontSize: 13, fontWeight: '700', color: colors.onSurface, letterSpacing: 1 },
   inputRow: {
@@ -165,28 +161,17 @@ const styles = StyleSheet.create({
   eyeBtn: { padding: spacing.xs, marginLeft: spacing.xs },
   passwordLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   forgotText: { fontSize: 13, fontWeight: '500', color: colors.primaryContainer },
-
-  // LOG IN button
   loginBtn: {
-    width: '100%',
-    height: 56,
+    width: '100%', height: 56,
     backgroundColor: colors.primaryContainer,
     borderRadius: borderRadius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
     marginTop: spacing.xs,
   },
-  loginBtnText: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: colors.white,
-    letterSpacing: 2,
-  },
-
+  loginBtnText: { fontSize: 16, fontWeight: '800', color: colors.white, letterSpacing: 2 },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginVertical: spacing.sm },
   dividerLine: { flex: 1, height: 1, backgroundColor: '#2A1A18' },
   dividerText: { fontSize: 13, fontWeight: '600', color: colors.onSurfaceVariant, letterSpacing: 2 },
-
   signupRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   signupText: { fontSize: 15, color: colors.onSurfaceVariant },
   signupLink: { fontSize: 15, fontWeight: '600', color: colors.primaryContainer },

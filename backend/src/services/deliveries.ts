@@ -6,6 +6,8 @@ import * as userRepo       from '../repositories/user.repository';
 import * as walletSvc      from './wallet';
 import * as notifications  from './notifications';
 import * as stateMachine   from './stateMachine';
+import * as efficiency     from './efficiency';
+import { isWithinKigali }  from '../lib/geocoding';
 import { NotFoundError, ForbiddenError, BadRequestError } from '../lib/errors';
 import { DeliveryStatus, UserRole } from '../types';
 import type { DeliveryGateway } from '../lib/socket';
@@ -13,7 +15,16 @@ import type { DeliveryGateway } from '../lib/socket';
 let gateway: DeliveryGateway | null = null;
 export function setGateway(gw: DeliveryGateway) { gateway = gw; }
 
-const BROADCAST_RADIUS_KM = 0.3;
+// ─── Kigali geography constants ───────────────────────────────────────────────
+// The service operates across 3 districts in Kigali City:
+//   Nyarugenge · Kicukiro · Gasabo
+// Max cross-district distance (Nyarugenge ↔ Gasabo eastern edge) ≈ 15 km.
+// Motorcycles are fast in Kigali so a 5 km broadcast radius captures plenty
+// of nearby couriers without going out-of-district.
+const BROADCAST_RADIUS_KM = parseFloat(process.env.BROADCAST_RADIUS_KM ?? '5');
+
+// Minimum agreed price in RWF — cheapest realistic moto delivery in Kigali (configurable)
+const MIN_PRICE_RWF = parseInt(process.env.MIN_DELIVERY_PRICE_RWF ?? '200', 10);
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R    = 6371;
@@ -28,6 +39,25 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
 // ─── Create & broadcast ───────────────────────────────────────────────────────
 
 export async function create(userId: string, dto: Record<string, unknown>) {
+  // Validate pickup and dropoff coordinates are within Kigali City
+  const pickupLat  = dto.pickupLat  as number;
+  const pickupLng  = dto.pickupLng  as number;
+  const dropoffLat = dto.dropoffLat as number;
+  const dropoffLng = dto.dropoffLng as number;
+
+  if (!isWithinKigali(pickupLat, pickupLng)) {
+    throw new BadRequestError(
+      'Pickup location is outside the Kigali service area. ' +
+      'This service operates within Nyarugenge, Kicukiro and Gasabo districts.',
+    );
+  }
+  if (!isWithinKigali(dropoffLat, dropoffLng)) {
+    throw new BadRequestError(
+      'Drop-off location is outside the Kigali service area. ' +
+      'This service operates within Nyarugenge, Kicukiro and Gasabo districts.',
+    );
+  }
+
   const trackingToken = crypto.randomBytes(20).toString('hex');
   const delivery = await deliveryRepo.create({
     ...(dto as any),
@@ -41,16 +71,22 @@ export async function create(userId: string, dto: Record<string, unknown>) {
 
 async function broadcastToNearbyCouriers(delivery: any) {
   await stateMachine.transition(delivery.id, DeliveryStatus.BROADCAST);
-  const couriers = await courierRepo.findOnline();
+
+  // Use ranked couriers (sorted by efficiency score DESC) so the best couriers
+  // get the job notification first and appear first in the available-jobs list.
+  const couriers = await efficiency.getRankedOnlineCouriers();
+
   for (const c of couriers) {
     if (
       c.currentLat !== null && c.currentLng !== null &&
       haversineKm(delivery.pickupLat, delivery.pickupLng, c.currentLat!, c.currentLng!) <= BROADCAST_RADIUS_KM
     ) {
-      gateway?.emitJobAvailable(c.userId, delivery);
+      gateway?.emitJobAvailable(c.userId, { ...delivery, _courierScore: c.reliabilityScore });
       notifications.notifyJobAvailable(c.user?.phone ?? '', delivery.pickupAddress).catch(() => {});
     }
   }
+
+  gateway?.emitDeliveryStatus(delivery.id, { status: DeliveryStatus.BROADCAST, deliveryId: delivery.id });
 }
 
 // ─── Take job ─────────────────────────────────────────────────────────────────
@@ -84,7 +120,22 @@ export async function confirmAgreement(deliveryId: string, userId: string, agree
   const isCourier = delivery.courier?.userId === userId;
   if (!isSender && !isCourier) throw new ForbiddenError('Not authorized');
 
-  await deliveryRepo.update(deliveryId, { agreedPriceRwf, finalPriceRwf: agreedPriceRwf, agreedDeliveryTime: agreedDeliveryTime ?? null });
+  // Enforce minimum price for Kigali moto deliveries
+  if (agreedPriceRwf < MIN_PRICE_RWF) {
+    throw new BadRequestError(`Minimum delivery price is RWF ${MIN_PRICE_RWF.toLocaleString()}`);
+  }
+
+  // Cap delivery time — max 120 min covers the longest cross-district trip in Kigali
+  const MAX_DELIVERY_TIME_MINUTES = 120;
+  const clampedDeliveryTime = agreedDeliveryTime !== undefined
+    ? Math.min(Math.max(agreedDeliveryTime, 1), MAX_DELIVERY_TIME_MINUTES)
+    : undefined;
+
+  await deliveryRepo.update(deliveryId, {
+    agreedPriceRwf,
+    finalPriceRwf:     agreedPriceRwf,
+    agreedDeliveryTime: clampedDeliveryTime ?? null,
+  });
   const updated = await stateMachine.transition(deliveryId, DeliveryStatus.COURIER_CONFIRMED, userId);
   gateway?.emitCourierInterested(deliveryId, { type: 'AGREEMENT_CONFIRMED', agreedPriceRwf });
   return updated;
@@ -97,17 +148,24 @@ export async function submitPayment(deliveryId: string, senderUserId: string, ag
   if (!delivery) throw new NotFoundError('Delivery not found');
   if (delivery.senderId !== senderUserId) throw new ForbiddenError('Not your delivery');
   if (delivery.paymentStatus === 'HELD') throw new BadRequestError('Payment already submitted');
+  if (!delivery.agreedPriceRwf) throw new BadRequestError('Agreed price not set — confirm agreement first');
+
+  // Debit sender wallet — throws BadRequestError if insufficient balance
+  await walletSvc.debitSender(senderUserId, delivery.agreedPriceRwf, deliveryId);
 
   await deliveryRepo.update(deliveryId, {
     paymentStatus: 'HELD',
     paymentHeldAt: new Date(),
     ...(agreedDeliveryTime !== undefined ? { agreedDeliveryTime } : {}),
   });
-  walletSvc.debitSender(senderUserId, delivery.agreedPriceRwf ?? 0, deliveryId).catch((e) =>
-    console.warn('[submitPayment] debitSender non-fatal:', e.message),
-  );
+
   gateway?.emitCourierInterested(deliveryId, { type: 'PAYMENT_HELD' });
-  return { success: true, amount: delivery.agreedPriceRwf, held: true };
+  return {
+    success: true,
+    amount:  delivery.agreedPriceRwf,
+    held:    true,
+    message: `RWF ${delivery.agreedPriceRwf.toLocaleString()} held in escrow. Courier will be paid on delivery completion.`,
+  };
 }
 
 // ─── Start delivery ───────────────────────────────────────────────────────────
@@ -211,14 +269,30 @@ export async function completeDelivery(deliveryId: string, courierUserId: string
   });
   const updated = await stateMachine.transition(deliveryId, DeliveryStatus.DELIVERED, courierUserId);
 
-  const amount = delivery.agreedPriceRwf ?? 0;
-  walletSvc.creditCourier(courierUserId, amount, deliveryId).catch((e) => console.warn('[complete] credit:', e));
-  await courierRepo.updateStats(courierUserId, { incrementDeliveries: true, incrementEarnings: amount });
+  // Credit courier — awaited so wallet is always consistent
+  // creditCourier deducts the 100 RWF service fee automatically and returns net amount
+  const gross = delivery.agreedPriceRwf ?? 0;
+  const { netAmount } = await walletSvc.creditCourier(courierUserId, gross, deliveryId);
+
+  // Update courier stats using net earnings (post-fee)
+  await courierRepo.updateStats(courierUserId, {
+    incrementDeliveries: true,
+    incrementEarnings:   netAmount,
+  });
+
+  // Recalculate efficiency score asynchronously — non-blocking
+  efficiency.recalculate(courierUserId).catch((e) =>
+    console.warn('[efficiency] recalc after completion:', e.message),
+  );
 
   const sender = await userRepo.findById(delivery.senderId);
   if (sender?.phone) {
     notifications.notifyDeliveryCompleted(sender.phone, delivery.courier?.user?.fullName ?? 'Courier').catch(() => {});
   }
+  notifications.notifyMoneyReceived(
+    delivery.courier?.user?.phone ?? '', netAmount,
+  ).catch(() => {});
+
   gateway?.emitDeliveryStatus(deliveryId, { status: DeliveryStatus.DELIVERED });
   return updated;
 }
@@ -251,6 +325,11 @@ export async function createRating(deliveryId: string, giverUserId: string, star
     const ratings = await prisma.rating.findMany({ where: { receiverId: delivery.courier.userId } });
     const avg = ratings.reduce((s, r) => s + r.stars, 0) / ratings.length;
     await courierRepo.update(delivery.courier.userId, { avgRating: avg });
+
+    // New rating changes avgRating → re-score the courier immediately
+    efficiency.recalculate(delivery.courier.userId).catch((e) =>
+      console.warn('[efficiency] recalc after rating:', e.message),
+    );
   }
   return rating;
 }
@@ -280,7 +359,25 @@ export async function cancel(id: string, userId: string) {
   if (!stateMachine.canCancel(delivery.status as DeliveryStatus)) {
     throw new BadRequestError(`Cannot cancel at status: ${delivery.status}`);
   }
+
   const updated = await stateMachine.transition(id, DeliveryStatus.CANCELLED, userId);
+
+  // If sender had already paid (escrow held), refund the full amount back
+  if (delivery.paymentStatus === 'HELD' && delivery.agreedPriceRwf) {
+    await walletSvc.refundSender(userId, delivery.agreedPriceRwf, id);
+    await deliveryRepo.update(id, { paymentStatus: 'REFUNDED' as any });
+  }
+
+  // Recalculate the courier's efficiency score — cancellation hurts completion rate
+  if (delivery.courierId) {
+    const courierRecord = await courierRepo.findById(delivery.courierId);
+    if (courierRecord) {
+      efficiency.recalculate(courierRecord.userId).catch((e) =>
+        console.warn('[efficiency] recalc after cancel:', e.message),
+      );
+    }
+  }
+
   gateway?.emitJobCancelled(id);
   return updated;
 }
@@ -294,13 +391,14 @@ export async function getAvailable(courierUserId: string) {
 export async function getNearbyAvailable(courierUserId: string) {
   const courier = await courierRepo.findByUserId(courierUserId);
   if (!courier) throw new NotFoundError('Courier profile not found');
-  if (!courier.currentLat || !courier.currentLng) return [];
+  // Return all broadcast deliveries — the courier's app shows distance on each card.
+  // If courier has a GPS position filter to within the broadcast radius.
   const deliveries = await deliveryRepo.findMany({ status: DeliveryStatus.BROADCAST, courierId: null });
+  if (!courier.currentLat || !courier.currentLng) return deliveries;
   return deliveries.filter(
     (d) => haversineKm(courier.currentLat!, courier.currentLng!, (d as any).pickupLat, (d as any).pickupLng) <= BROADCAST_RADIUS_KM,
   );
 }
-
 export async function expressInterest(deliveryId: string, courierUserId: string, dto: { proposedPriceRwf?: number; etaMinutes?: number }) {
   const courier = await courierRepo.findByUserId(courierUserId);
   if (!courier) throw new NotFoundError('Courier profile not found');

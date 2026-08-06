@@ -22,6 +22,21 @@ router.post('/admin/signin',
   ctrl.adminSignin,
 );
 
+router.post('/courier/signup',
+  validateBody(z.object({
+    email:    z.string().email(),
+    password: z.string().min(6),
+    fullName: z.string().min(1),
+    phone:    z.string().min(5),
+  })),
+  ctrl.courierSignup,
+);
+
+router.post('/courier/signin',
+  validateBody(z.object({ email: z.string().email(), password: z.string() })),
+  ctrl.courierSignin,
+);
+
 router.post('/courier/check-phone',
   validateBody(z.object({ phone: z.string().min(5) })),
   ctrl.checkCourierPhone,

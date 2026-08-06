@@ -9,7 +9,10 @@ const router = Router();
 
 router.post('/signed-upload',
   authenticate,
-  validateBody(z.object({ folder: z.enum(ALLOWED_FOLDERS) })),
+  validateBody(z.object({
+    folder: z.enum(ALLOWED_FOLDERS),
+    resource_type: z.string().optional(),
+  })),
   ctrl.getSignedUpload,
 );
 

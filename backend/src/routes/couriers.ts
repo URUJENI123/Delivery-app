@@ -15,7 +15,33 @@ router.post('/onboarding/start',
   ctrl.startOnboarding,
 );
 
-router.put('/onboarding/step', authenticate, ctrl.saveOnboardingStep);
+router.put('/onboarding/step',
+  authenticate,
+  validateBody(z.object({
+    // Step 2 — credentials
+    nationalIdNumber:      z.string().optional(),
+    vehiclePlate:          z.string().optional(),
+    motorcyclePlate:       z.string().optional(),
+    momoNumber:            z.string().optional(),
+    momoProvider:          z.string().optional(),
+    jacketSerialNumber:    z.string().optional(),
+    // Operating zone must be one of the 3 Kigali districts
+    operatingZone: z.enum(['Nyarugenge', 'Kicukiro', 'Gasabo']).optional(),
+    emergencyContactName:  z.string().optional(),
+    emergencyContactPhone: z.string().optional(),
+    // Step 3 — document URLs
+    selfieUrl:            z.string().url().optional(),
+    idPhotoUrl:           z.string().url().optional(),
+    licensePhotoUrl:      z.string().url().optional(),
+    vehiclePhotoFrontUrl: z.string().url().optional(),
+    vehiclePhotoRearUrl:  z.string().url().optional(),
+    jacketPhotoUrl:       z.string().url().optional(),
+    nationalIdDocumentUrl: z.string().url().optional(),
+    licenseDocumentUrl:    z.string().url().optional(),
+    step: z.number().int().min(1).max(3).optional(),
+  })),
+  ctrl.saveOnboardingStep,
+);
 
 router.get('/onboarding/status', authenticate, ctrl.getOnboardingStatus);
 
@@ -26,7 +52,18 @@ router.post('/onboarding/submit',
 );
 
 router.get('/me',          authenticate, requireRole(UserRole.COURIER), ctrl.getProfile);
-router.put('/me',          authenticate, requireRole(UserRole.COURIER), ctrl.updateProfile);
+router.put('/me',
+  authenticate, requireRole(UserRole.COURIER),
+  validateBody(z.object({
+    emergencyContactName:  z.string().optional(),
+    emergencyContactPhone: z.string().optional(),
+    momoNumber:            z.string().optional(),
+    momoProvider:          z.string().optional(),
+    operatingZone: z.enum(['Nyarugenge', 'Kicukiro', 'Gasabo']).optional(),
+  })),
+  ctrl.updateProfile,
+);
+router.get('/me/score',    authenticate, requireRole(UserRole.COURIER), ctrl.getEfficiencyStats);
 router.put('/me/online',   authenticate, requireRole(UserRole.COURIER),
   validateBody(z.object({ isOnline: z.boolean(), lat: z.number().optional(), lng: z.number().optional() })),
   ctrl.toggleOnline,

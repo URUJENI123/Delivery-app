@@ -162,19 +162,15 @@ export function PersonalDetails({ navigation }: Props) {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
-
   topBar: {
     height: 52, flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', paddingHorizontal: spacing.md,
   },
   iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 17, fontWeight: '700', color: colors.primary },
-
   content: { paddingHorizontal: spacing.lg, paddingBottom: 32, gap: spacing.lg },
-
   title: { fontSize: 24, fontWeight: '800', color: colors.onSurface },
   subtitle: { ...typography.bodyMd, color: colors.onSurfaceVariant, lineHeight: 22, marginTop: -spacing.sm },
-
   avatarSection: { alignItems: 'center', gap: spacing.sm },
   avatarWrap: { position: 'relative' },
   avatar: {
@@ -189,7 +185,6 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   changePhotoText: { fontSize: 14, fontWeight: '600', color: colors.primary },
-
   fieldGroup: { gap: spacing.xs },
   fieldLabel: { fontSize: 14, fontWeight: '500', color: colors.onSurface },
   inputRow: {
@@ -203,7 +198,6 @@ const styles = StyleSheet.create({
   phonePrefix: { paddingRight: spacing.sm },
   phonePrefixText: { fontSize: 15, color: colors.onSurface, fontWeight: '500' },
   phoneDivider: { width: 1, height: 24, backgroundColor: colors.outlineVariant, marginRight: spacing.sm },
-
   footer: {
     paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, paddingTop: spacing.sm,
   },

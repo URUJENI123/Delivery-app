@@ -58,6 +58,11 @@ export async function getDashboard(req: Request, res: Response, next: NextFuncti
   catch (err) { next(err); }
 }
 
+export async function getEfficiencyStats(req: Request, res: Response, next: NextFunction) {
+  try { res.json(await couriersService.getEfficiencyStats(req.user!.id)); }
+  catch (err) { next(err); }
+}
+
 export async function getEarnings(req: Request, res: Response, next: NextFunction) {
   try { res.json(await couriersService.getEarnings(req.user!.id)); }
   catch (err) { next(err); }

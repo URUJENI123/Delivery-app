@@ -3,6 +3,10 @@ import * as courierRepo from '../repositories/courier.repository';
 import * as userRepo    from '../repositories/user.repository';
 import * as deliveryRepo from '../repositories/delivery.repository';
 import { NotFoundError } from '../lib/errors';
+import type { DeliveryGateway } from '../lib/socket';
+
+let gateway: DeliveryGateway | null = null;
+export function setGateway(gw: DeliveryGateway) { gateway = gw; }
 
 export async function getDashboard() {
   const { default: prisma } = await import('../lib/prisma');
@@ -55,18 +59,29 @@ export async function listCouriers(filters?: { tier?: string; approved?: boolean
       isApprovedByAdmin: filters?.approved !== undefined ? filters.approved : undefined,
       operatingZone:     filters?.zone ? { contains: filters.zone, mode: 'insensitive' as const } : undefined,
     },
-    { user: { select: { id: true, email: true, phone: true, fullName: true, isActive: true, createdAt: true } } },
+    {
+      user: { select: { id: true, email: true, phone: true, fullName: true, isActive: true, createdAt: true } },
+    },
+    // Sort by reliability score descending so the admin sees the best couriers first
+    { reliabilityScore: 'desc' as const },
   );
 }
 
 export async function verifyCourier(courierId: string, dto: { approved: boolean; tier?: string; adminNotes?: string }) {
   const courier = await courierRepo.findById(courierId);
   if (!courier) throw new NotFoundError('Courier not found');
-  return courierRepo.update(courier.userId, {
+  const updated = await courierRepo.update(courier.userId, {
     isApprovedByAdmin: dto.approved,
     verificationTier:  dto.tier ? (dto.tier as any) : undefined,
     adminNotes:        dto.adminNotes ?? undefined,
   });
+  // Notify the courier in real-time so their app can transition screens
+  gateway?.emitToUser(courier.userId, 'courier:approval', {
+    approved:  dto.approved,
+    tier:      dto.tier,
+    adminNotes: dto.adminNotes,
+  });
+  return updated;
 }
 
 export async function suspendCourier(courierId: string, dto: { reason: string }) {
@@ -74,6 +89,8 @@ export async function suspendCourier(courierId: string, dto: { reason: string })
   if (!courier) throw new NotFoundError('Courier not found');
   await courierRepo.update(courier.userId, { isOnline: false, isApprovedByAdmin: false, adminNotes: dto.reason });
   await userRepo.update(courier.userId, { isActive: false });
+  // Notify the courier immediately so their app can log them out / show suspension screen
+  gateway?.emitToUser(courier.userId, 'courier:suspended', { reason: dto.reason });
   return { success: true, message: 'Courier suspended' };
 }
 
