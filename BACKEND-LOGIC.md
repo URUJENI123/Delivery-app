@@ -76,7 +76,7 @@ HTTP Request
 
 - All routes mount under `/api/v1`
 - Health check: `GET /health` (no auth, returns `{ status: "ok" }`)
-- Rate limit: 100 requests per minute per IP
+- Rate limiting: per-route presets (global 200 req/min/IP default, auth 20, public 60, payment 10, admin 120, webhook 600) — see `src/lib/rateLimit.ts`; store is Redis when `REDIS_URL` set, otherwise per-process in-memory
 
 ---
 
@@ -1028,9 +1028,10 @@ Returns:
 ### Server Setup
 
 - Socket.IO server at path `/ws`
-- Wired to the same `http.Server` instance as Express in `backend/src/index.ts`
+- Wired to the same `http.Server` instance as Express in `backend/src/server.ts` (bootstrapped by `index.ts` or a `cluster.ts` worker)
 - Class: `DeliveryGateway` in `backend/src/lib/socket.ts`
 - Singleton exposed via `getGateway()` / `setGateway()`
+- Redis adapter auto-enabled when `REDIS_URL` set (cross-instance broadcast); `location:update` throttled to 1/3s per delivery per socket
 
 ---
 
@@ -1529,7 +1530,7 @@ throw new BadRequestError('Cannot cancel after package has been picked up');
 
 ### Error Handler Middleware (`backend/src/middleware/errorHandler.ts`)
 
-Registered as the last middleware in `index.ts`:
+Registered as the last middleware in `server.ts`:
 
 ```typescript
 app.use(errorHandler);

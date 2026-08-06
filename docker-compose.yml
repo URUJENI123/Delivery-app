@@ -1,0 +1,53 @@
+# Delivery App — deployment stack
+#
+#   docker compose up --build -d
+#   docker compose up --build -d --scale backend=3
+#
+# - `backend` runs the Express API (+ Socket.IO on /ws). Set CLUSTER_WORKERS in
+#   the backend .env to run multiple node workers per container (requires Redis),
+#   or scale the container itself with --scale.
+# - `redis` powers shared rate limits, the cache and the Socket.IO adapter.
+# - `nginx` load-balances across backend instances (config: backend/nginx.conf).
+
+services:
+  backend:
+    build: ./backend
+    env_file: ./backend/.env
+    environment:
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+    expose:
+      - "3001"
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    # Uncomment to run the cluster entry (multi-process inside one container)
+    # command: ["node", "dist/cluster.js"]
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./backend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  redis-data:

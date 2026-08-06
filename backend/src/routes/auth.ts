@@ -2,10 +2,15 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { authenticate } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
+import { createLimiter } from '../lib/rateLimit';
 import * as ctrl from '../controllers/auth.controller';
 import { UserRole } from '../types';
 
 const router = Router();
+
+// Tight per-user/IP limit — sign-in, sign-up and OTP endpoints are the
+// brute-force surface.
+router.use(createLimiter('auth'));
 
 router.post('/sender/signup',
   validateBody(z.object({ email: z.string().email(), password: z.string().min(6), fullName: z.string().optional() })),

@@ -5,10 +5,12 @@ import { validateBody, validateQuery } from '../middleware/validate';
 import * as ctrl from '../controllers/admin.controller';
 import * as refundCtrl from '../controllers/refund.controller';
 import { UserRole } from '../types';
+import { createLimiter } from '../lib/rateLimit';
 
 const router = Router();
 
 router.use(authenticate, requireRole(UserRole.ADMIN));
+router.use(createLimiter('admin'));
 
 router.get('/dashboard',               ctrl.getDashboard);
 router.get('/live-map',                ctrl.getLiveMap);

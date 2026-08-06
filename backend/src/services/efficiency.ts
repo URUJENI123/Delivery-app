@@ -20,6 +20,7 @@
  */
 
 import prisma from '../lib/prisma';
+import { withCache, cacheDel } from '../lib/cache';
 
 const WEIGHTS = {
   rating:     0.40,
@@ -133,6 +134,10 @@ export async function recalculate(courierUserId: string): Promise<number> {
     `volume=${(volumeScore * 100).toFixed(0)}%)`,
   );
 
+  // Invalidate the cached stats + ranked list so they reflect the new score
+  cacheDel(`efficiency:stats:${courierUserId}`).catch(() => {});
+  cacheDel('efficiency:ranked').catch(() => {});
+
   return score;
 }
 
@@ -148,18 +153,24 @@ export async function getRankedOnlineCouriers(): Promise<{
   reliabilityScore: number;
   user: { phone: string | null; fullName: string | null } | null;
 }[]> {
-  return prisma.courier.findMany({
-    where: {
-      isOnline:          true,
-      isApprovedByAdmin: true,
-      currentLat:        { not: null },
-      currentLng:        { not: null },
-    },
-    include: {
-      user: { select: { phone: true, fullName: true } },
-    },
-    orderBy: { reliabilityScore: 'desc' },
-  }) as any;
+  // 5s TTL — courier online/GPS state is near-real-time; a few seconds of
+  // staleness is invisible but removes a DB query per broadcast.
+  return withCache(
+    'efficiency:ranked',
+    5,
+    () => prisma.courier.findMany({
+      where: {
+        isOnline:          true,
+        isApprovedByAdmin: true,
+        currentLat:        { not: null },
+        currentLng:        { not: null },
+      },
+      include: {
+        user: { select: { phone: true, fullName: true } },
+      },
+      orderBy: { reliabilityScore: 'desc' },
+    }) as any,
+  );
 }
 
 /**
@@ -167,42 +178,46 @@ export async function getRankedOnlineCouriers(): Promise<{
  * Shown on the courier's own profile and admin courier list.
  */
 export async function getCourierStats(courierUserId: string) {
-  const courier = await prisma.courier.findUnique({
-    where: { userId: courierUserId },
-    select: {
-      id:               true,
-      avgRating:        true,
-      totalDeliveries:  true,
-      completionRate:   true,
-      reliabilityScore: true,
-    },
+  // 30s TTL — the score only changes when a delivery completes/cancels/rates,
+  // and recalculate() invalidates this key immediately when that happens.
+  return withCache(`efficiency:stats:${courierUserId}`, 30, async () => {
+    const courier = await prisma.courier.findUnique({
+      where: { userId: courierUserId },
+      select: {
+        id:               true,
+        avgRating:        true,
+        totalDeliveries:  true,
+        completionRate:   true,
+        reliabilityScore: true,
+      },
+    });
+    if (!courier) return null;
+
+    const [delivered, cancelled, failed] = await Promise.all([
+      prisma.delivery.count({ where: { courierId: courier.id, status: 'DELIVERED' } }),
+      prisma.delivery.count({ where: { courierId: courier.id, status: 'CANCELLED' } }),
+      prisma.delivery.count({ where: { courierId: courier.id, status: { in: ['FAILED', 'DISPUTED'] } } }),
+    ]);
+
+    const totalAttempted  = delivered + cancelled + failed;
+    const completionRate  = totalAttempted > 0 ? Math.round((delivered / totalAttempted) * 100) : 0;
+
+    // Tier label based on score
+    const score = courier.reliabilityScore ?? 0;
+    const tier =
+      score >= 85 ? 'Premier'   :
+      score >= 70 ? 'Trusted'   :
+      score >= 50 ? 'Active'    :
+      score >= 30 ? 'Learning'  : 'New';
+
+    return {
+      reliabilityScore: score,
+      tier,
+      avgRating:        courier.avgRating,
+      totalDeliveries:  delivered,
+      completionRate,
+      cancelled,
+      failed,
+    };
   });
-  if (!courier) return null;
-
-  const [delivered, cancelled, failed] = await Promise.all([
-    prisma.delivery.count({ where: { courierId: courier.id, status: 'DELIVERED' } }),
-    prisma.delivery.count({ where: { courierId: courier.id, status: 'CANCELLED' } }),
-    prisma.delivery.count({ where: { courierId: courier.id, status: { in: ['FAILED', 'DISPUTED'] } } }),
-  ]);
-
-  const totalAttempted  = delivered + cancelled + failed;
-  const completionRate  = totalAttempted > 0 ? Math.round((delivered / totalAttempted) * 100) : 0;
-
-  // Tier label based on score
-  const score = courier.reliabilityScore ?? 0;
-  const tier =
-    score >= 85 ? 'Premier'   :
-    score >= 70 ? 'Trusted'   :
-    score >= 50 ? 'Active'    :
-    score >= 30 ? 'Learning'  : 'New';
-
-  return {
-    reliabilityScore: score,
-    tier,
-    avgRating:        courier.avgRating,
-    totalDeliveries:  delivered,
-    completionRate,
-    cancelled,
-    failed,
-  };
 }

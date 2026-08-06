@@ -2,9 +2,13 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { authenticate } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
+import { createLimiter } from '../lib/rateLimit';
 import * as ctrl from '../controllers/geocoding.controller';
 
 const router = Router();
+
+// Bounded — the resolve/reverse endpoints proxy external Nominatim lookups
+router.use(createLimiter('public'));
 
 // Public — the map bounds are needed before login (e.g. landing page)
 router.get('/bounds', ctrl.getBounds);

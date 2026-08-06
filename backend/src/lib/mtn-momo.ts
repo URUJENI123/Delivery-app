@@ -17,6 +17,7 @@
  */
 
 import crypto from 'crypto';
+import { cacheGet, cacheSet } from './cache';
 
 // ─── Config ────────────────────────────────────────────────────────────────────
 
@@ -39,7 +40,7 @@ const DIS_API_USER_ID = process.env.MTN_DISBURSEMENT_API_USER_ID ?? '';
 const DIS_API_KEY     = process.env.MTN_DISBURSEMENT_API_KEY     ?? '';
 const DIS_SUB_KEY     = process.env.MTN_DISBURSEMENT_SUBSCRIPTION_KEY ?? '';
 
-// ─── Token cache (in-memory, reset on restart) ─────────────────────────────────
+// ─── Token cache (Redis-backed, shared across instances) ───────────────────────
 
 interface TokenCache { token: string; expiresAt: number }
 const tokenCache: Record<'collection' | 'disbursement', TokenCache | null> = {
@@ -47,35 +48,65 @@ const tokenCache: Record<'collection' | 'disbursement', TokenCache | null> = {
   disbursement: null,
 };
 
+// In-process mutex — prevents a thundering herd of token fetches when the
+// shared token expires at once across workers.
+const refreshLocks: Record<'collection' | 'disbursement', Promise<string> | null> = {
+  collection:   null,
+  disbursement: null,
+};
+
 async function getBearerToken(product: 'collection' | 'disbursement'): Promise<string> {
-  const cached = tokenCache[product];
-  if (cached && Date.now() < cached.expiresAt - 60_000) return cached.token;
+  // Fast path: in-memory cache
+  const local = tokenCache[product];
+  if (local && Date.now() < local.expiresAt - 60_000) return local.token;
 
-  const userId = product === 'collection' ? COL_API_USER_ID : DIS_API_USER_ID;
-  const apiKey = product === 'collection' ? COL_API_KEY     : DIS_API_KEY;
-  const subKey = product === 'collection' ? COL_SUB_KEY     : DIS_SUB_KEY;
-  const path   = product === 'collection' ? 'collection'    : 'disbursement';
-
-  const credentials = Buffer.from(`${userId}:${apiKey}`).toString('base64');
-  const res = await fetch(`${BASE_URL}/${path}/token/`, {
-    method:  'POST',
-    headers: {
-      'Authorization':            `Basic ${credentials}`,
-      'Ocp-Apim-Subscription-Key': subKey,
-    },
-  });
-
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`[MTN] Token fetch failed (${res.status}): ${body}`);
+  // Fast path 2: shared Redis cache
+  const redisKey = `momo:token:${product}`;
+  const shared = await cacheGet<string>(redisKey);
+  if (shared) {
+    tokenCache[product] = { token: shared, expiresAt: Date.now() + 60_000 };
+    return shared;
   }
 
-  const data = await res.json() as { access_token: string; expires_in: number };
-  tokenCache[product] = {
-    token:     data.access_token,
-    expiresAt: Date.now() + data.expires_in * 1000,
-  };
-  return data.access_token;
+  // Slow path: fetch from MTN (dedupe concurrent fetches)
+  if (refreshLocks[product]) return refreshLocks[product]!;
+
+  refreshLocks[product] = (async () => {
+    const userId = product === 'collection' ? COL_API_USER_ID : DIS_API_USER_ID;
+    const apiKey = product === 'collection' ? COL_API_KEY     : DIS_API_KEY;
+    const subKey = product === 'collection' ? COL_SUB_KEY     : DIS_SUB_KEY;
+    const path   = product === 'collection' ? 'collection'    : 'disbursement';
+
+    const credentials = Buffer.from(`${userId}:${apiKey}`).toString('base64');
+    const res = await fetch(`${BASE_URL}/${path}/token/`, {
+      method:  'POST',
+      headers: {
+        'Authorization':             `Basic ${credentials}`,
+        'Ocp-Apim-Subscription-Key': subKey,
+      },
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`[MTN] Token fetch failed (${res.status}): ${body}`);
+    }
+
+    const data = await res.json() as { access_token: string; expires_in: number };
+    const ttl  = Math.max(data.expires_in - 120, 60);
+    tokenCache[product] = {
+      token:     data.access_token,
+      expiresAt: Date.now() + data.expires_in * 1000,
+    };
+    // Fire-and-forget the shared cache write
+    cacheSet(redisKey, data.access_token, ttl).catch(() => {});
+    return data.access_token;
+  })();
+
+  try {
+    return await refreshLocks[product]!;
+  } finally {
+    refreshLocks[product] = null;
+  }
 }
 
 // ─── Types ─────────────────────────────────────────────────────────────────────

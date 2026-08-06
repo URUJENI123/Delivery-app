@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { geocodeAddress, reverseGeocode, isWithinKigali, detectDistrict, KIGALI_BOUNDS } from '../lib/geocoding';
 import { BadRequestError } from '../lib/errors';
+import { withCache } from '../lib/cache';
 
 /**
  * POST /geocode/resolve
@@ -13,7 +14,11 @@ export async function resolve(req: Request, res: Response, next: NextFunction) {
     const { address } = req.body as { address: string };
     if (!address?.trim()) throw new BadRequestError('address is required');
 
-    const result = await geocodeAddress(address.trim());
+    const result = await withCache(
+      `geocode:resolve:${address.trim().toLowerCase()}`,
+      86_400, // 24h — address→coords rarely changes
+      () => geocodeAddress(address.trim()),
+    );
     if (!result) {
       return res.status(404).json({ error: 'Address not found in Kigali. Please try a more specific address.' });
     }
@@ -49,7 +54,11 @@ export async function reverse(req: Request, res: Response, next: NextFunction) {
       });
     }
 
-    const result = await reverseGeocode(lat, lng);
+    const result = await withCache(
+      `geocode:reverse:${lat.toFixed(6)}:${lng.toFixed(6)}`,
+      30 * 86_400, // 30 days — coords→address is very stable
+      () => reverseGeocode(lat, lng),
+    );
     if (!result) {
       // Still return the district even if Nominatim can't resolve the exact address
       return res.json({
@@ -69,7 +78,7 @@ export async function reverse(req: Request, res: Response, next: NextFunction) {
  * Used by the map to restrict the search/pan area.
  */
 export async function getBounds(_req: Request, res: Response) {
-  res.json({
+  const bounds = await withCache('geocode:bounds', 3_600, async () => ({
     bounds: KIGALI_BOUNDS,
     districts: {
       Nyarugenge: { lat: -1.9494, lng: 30.0605, label: 'Nyarugenge (City Centre)' },
@@ -78,5 +87,6 @@ export async function getBounds(_req: Request, res: Response) {
     },
     defaultCenter: { lat: -1.9494, lng: 30.0605 },
     defaultZoom:   13,
-  });
+  }));
+  res.json(bounds);
 }

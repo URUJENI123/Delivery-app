@@ -4,52 +4,57 @@ import * as userRepo    from '../repositories/user.repository';
 import * as deliveryRepo from '../repositories/delivery.repository';
 import { NotFoundError } from '../lib/errors';
 import type { DeliveryGateway } from '../lib/socket';
+import { withCache } from '../lib/cache';
 
 let gateway: DeliveryGateway | null = null;
 export function setGateway(gw: DeliveryGateway) { gateway = gw; }
 
 export async function getDashboard() {
-  const { default: prisma } = await import('../lib/prisma');
+  // 15s TTL — dashboards poll frequently and the 13+ queries are heavy. Short
+  // enough that stale numbers are never noticeable.
+  return withCache('admin:dashboard', 15, async () => {
+    const { default: prisma } = await import('../lib/prisma');
 
-  const now        = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const weekStart  = new Date(now); weekStart.setDate(now.getDate() - now.getDay());
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const now        = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekStart  = new Date(now); weekStart.setDate(now.getDate() - now.getDay());
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const [
-    activeDeliveries, onlineCouriers, completedToday, openDisputes,
-    todayRevRows, weekRevRows, monthRevRows,
-    pendingVerifications, topCouriers, recentEvents, failedDeliveries, totalUsers,
-  ] = await Promise.all([
-    adminRepo.getActiveDeliveryCount(),
-    courierRepo.count({ isOnline: true }),
-    deliveryRepo.count({ status: 'DELIVERED' as any, deliveredAt: { gte: todayStart } }),
-    prisma.dispute.count({ where: { status: 'OPEN' } }),
-    prisma.delivery.findMany({ where: { status: 'DELIVERED', deliveredAt: { gte: todayStart } }, select: { agreedPriceRwf: true } }),
-    prisma.delivery.findMany({ where: { status: 'DELIVERED', deliveredAt: { gte: weekStart  } }, select: { agreedPriceRwf: true } }),
-    prisma.delivery.findMany({ where: { status: 'DELIVERED', deliveredAt: { gte: monthStart } }, select: { agreedPriceRwf: true } }),
-    courierRepo.count({ isApprovedByAdmin: false }),
-    courierRepo.findMany({ isApprovedByAdmin: true }, { user: { select: { fullName: true, phone: true } } }),
-    adminRepo.getRecentEvents(20),
-    deliveryRepo.count({ status: 'FAILED' as any }),
-    adminRepo.countUsers(),
-  ]);
+    const [
+      activeDeliveries, onlineCouriers, completedToday, openDisputes,
+      todayRevRows, weekRevRows, monthRevRows,
+      pendingVerifications, topCouriers, recentEvents, failedDeliveries, totalUsers,
+    ] = await Promise.all([
+      adminRepo.getActiveDeliveryCount(),
+      courierRepo.count({ isOnline: true }),
+      deliveryRepo.count({ status: 'DELIVERED' as any, deliveredAt: { gte: todayStart } }),
+      prisma.dispute.count({ where: { status: 'OPEN' } }),
+      prisma.delivery.findMany({ where: { status: 'DELIVERED', deliveredAt: { gte: todayStart } }, select: { agreedPriceRwf: true } }),
+      prisma.delivery.findMany({ where: { status: 'DELIVERED', deliveredAt: { gte: weekStart  } }, select: { agreedPriceRwf: true } }),
+      prisma.delivery.findMany({ where: { status: 'DELIVERED', deliveredAt: { gte: monthStart } }, select: { agreedPriceRwf: true } }),
+      courierRepo.count({ isApprovedByAdmin: false }),
+      courierRepo.findMany({ isApprovedByAdmin: true }, { user: { select: { fullName: true, phone: true } } }),
+      adminRepo.getRecentEvents(20),
+      deliveryRepo.count({ status: 'FAILED' as any }),
+      adminRepo.countUsers(),
+    ]);
 
-  const sum = (rows: { agreedPriceRwf: number | null }[]) =>
-    rows.reduce((s, d) => s + (d.agreedPriceRwf ?? 0), 0);
+    const sum = (rows: { agreedPriceRwf: number | null }[]) =>
+      rows.reduce((s, d) => s + (d.agreedPriceRwf ?? 0), 0);
 
-  return {
-    activeDeliveries,
-    onlineCouriers,
-    completedToday,
-    openDisputes,
-    totalUsers,
-    revenue: { today: sum(todayRevRows), week: sum(weekRevRows), month: sum(monthRevRows) },
-    pendingVerifications,
-    topCouriers: topCouriers.slice(0, 5),
-    recentEvents,
-    failedDeliveries,
-  };
+    return {
+      activeDeliveries,
+      onlineCouriers,
+      completedToday,
+      openDisputes,
+      totalUsers,
+      revenue: { today: sum(todayRevRows), week: sum(weekRevRows), month: sum(monthRevRows) },
+      pendingVerifications,
+      topCouriers: topCouriers.slice(0, 5),
+      recentEvents,
+      failedDeliveries,
+    };
+  });
 }
 
 export async function listCouriers(filters?: { tier?: string; approved?: boolean; zone?: string }) {

@@ -52,6 +52,15 @@ export class DeliveryGateway {
           heading?: number;
           speed?: number;
         }) => {
+          // Throttle GPS updates — couriers push every ~15s but a buggy client
+          // could flood the room. Drop anything faster than 3s per delivery.
+          const now = Date.now();
+          const last = (socket.data.lastLocationAt as Record<string, number> | undefined)?.[data.deliveryId] ?? 0;
+          if (now - last < 3_000) return;
+          (socket.data.lastLocationAt as Record<string, number> | undefined ?? (socket.data.lastLocationAt = {}))[
+            data.deliveryId
+          ] = now;
+
           this.io.to(`delivery:${data.deliveryId}`).emit('courier:location', data);
         },
       );

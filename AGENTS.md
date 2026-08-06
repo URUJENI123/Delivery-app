@@ -16,7 +16,7 @@ Delivery-app/
   mobile/           React Native (Expo ~54) — couriers + senders
   AGENTS.md         This file
   BACKEND-LOGIC.md  Full backend logic documentation
-  Delivery-App.postman_collection.json  — 110 requests, 14 folders
+  Delivery-App.postman_collection.json  — 116 requests, 14 folders
 ```
 
 ---
@@ -30,6 +30,7 @@ npm install
 npm run dev                  # ts-node-dev on :3001
 npm run build                # tsc → dist/
 npm run start                # node dist/index.js
+npm run start:cluster        # node dist/cluster.js — multi-core (needs REDIS_URL)
 npm run prisma:generate
 npm run prisma:migrate       # prisma migrate deploy
 npm run prisma:push          # prisma db push
@@ -68,9 +69,11 @@ npm run android | ios | web
 
 ## Backend Architecture
 
-**Entry point**: `backend/src/index.ts`
+**Entry points**: `backend/src/index.ts` (single process) · `backend/src/cluster.ts` (multi-core)
+- Bootstrap lives in `backend/src/server.ts` (`createAppServer()` builds Express + Socket.IO; `startServer()` listens) — shared by both entries
 - Express + `http.createServer` + Socket.IO (`path: '/ws'`)
-- All routes under `/api/v1` · Rate limit: 100 req/min · Health: `GET /health`
+- All routes under `/api/v1` · Health: `GET /health`
+- Rate limiting: per-route presets (see `Rate limiting & load balancing` below)
 
 **Layering**:
 ```
@@ -81,12 +84,15 @@ routes/ (Zod validation) → controllers/ (req/res) → services/ (logic) → re
 | File | Purpose |
 |------|---------|
 | `src/lib/jwt.ts` | Sign/verify JWT. Payload: `{ sub, role }` |
-| `src/lib/socket.ts` | `DeliveryGateway` — all Socket.IO event emission |
+| `src/lib/socket.ts` | `DeliveryGateway` — all Socket.IO event emission, GPS throttle |
 | `src/lib/cloudinary.ts` | Signed upload URL generation + `publicUrl` |
 | `src/lib/geocoding.ts` | Nominatim geocoding, Kigali bounds, district detection |
-| `src/lib/mtn-momo.ts` | MTN MoMo Rwanda — Collections + Disbursements |
-| `src/lib/airtel-money.ts` | Airtel Money Rwanda — Collections + Disbursements |
+| `src/lib/mtn-momo.ts` | MTN MoMo Rwanda — Collections + Disbursements (Redis token cache) |
+| `src/lib/airtel-money.ts` | Airtel Money Rwanda — Collections + Disbursements (Redis token cache) |
 | `src/lib/errors.ts` | `BadRequestError(400)` `UnauthorizedError(401)` `ForbiddenError(403)` `NotFoundError(404)` `ConflictError(409)` |
+| `src/lib/redis.ts` | Lazy ioredis client — no-op (returns null) when `REDIS_URL` unset |
+| `src/lib/cache.ts` | `cacheGet/cacheSet/cacheDel/cacheDelByPrefix/withCache` — Redis, in-memory fallback |
+| `src/lib/rateLimit.ts` | `createLimiter(preset)` — presets: global, auth, public, payment, admin |
 
 **Key services**:
 | File | Purpose |
@@ -96,11 +102,47 @@ routes/ (Zod validation) → controllers/ (req/res) → services/ (logic) → re
 | `services/couriers.ts` | Onboarding, profile, GPS, jobs, efficiency |
 | `services/wallet.ts` | Escrow, payouts, top-up, withdraw, platform fee |
 | `services/payments.ts` | Unified MTN/Airtel provider abstraction |
-| `services/efficiency.ts` | 0–100 courier scoring, tier labels, ranking |
+| `services/efficiency.ts` | 0–100 courier scoring, tier labels, ranking (cached 5s/30s) |
 | `services/chat.ts` | Per-delivery DMs + conversation list |
-| `services/admin.ts` | Dashboard, live map, courier approval |
+| `services/admin.ts` | Dashboard (cached 15s), live map, courier approval |
 | `services/notifications.ts` | SMS/WhatsApp/Email — **stub, console only** |
 | `services/stateMachine.ts` | Enforces valid delivery status transitions |
+
+---
+
+## Rate limiting & load balancing
+
+### Rate limiting (per-route, shared across instances when Redis is on)
+| Preset | Limit | Applied to |
+|--------|-------|-----------|
+| `global` | 200 req/min/IP (env `RATE_LIMIT_GLOBAL_MAX`) | every request |
+| `auth` | 20 req/min | all `/auth/*` |
+| `public` | 60 req/min | `/track/*`, `/geocode/*`, `/wallet/payment-status` |
+| `payment` | 10 req/min/user (admins exempt) | `/deliveries/:id/pay`, `/wallet/topup`, `/wallet/withdraw` |
+| `admin` | 120 req/min/user | all `/admin/*` |
+| webhook | 600 req/min | `POST /wallet/webhook` (generous — provider callbacks) |
+
+Keying: `payment`/`admin`/`auth` key by authenticated user id when available, else by IP. Requires `TRUST_PROXY` so `req.ip` is the real client behind nginx.
+
+### Caching
+| Key | TTL | Invalidate on |
+|-----|-----|---------------|
+| `momo:token:{collection\|disbursement}`, `airtel:token` | provider expiry − 120s | expiry |
+| `geocode:bounds` | 1h | — |
+| `geocode:resolve:*` | 24h | — |
+| `geocode:reverse:*` | 30d | — |
+| `tracking:{token}` | 30s | OTP confirm |
+| `efficiency:ranked` | 5s | `recalculate()` |
+| `efficiency:stats:{userId}` | 30s | `recalculate()` |
+| `admin:dashboard` | 15s | — |
+
+### Deployment
+- `docker-compose.yml` (repo root): `backend` + `redis` + `nginx` — `docker compose up --build -d --scale backend=N`
+- `backend/Dockerfile` — multi-stage, `dist/` + prisma client
+- `backend/nginx.conf` — reverse proxy + WebSocket upgrade headers, `least_conn` balancing
+- Multi-process without Docker: `npm run start:cluster` (`CLUSTER_WORKERS`, defaults to CPU count in prod)
+- **Cluster/multi-instance requires `REDIS_URL`** — otherwise rate-limit counters, caches and Socket.IO broadcasts are per-process only
+- Socket.IO: Redis adapter auto-enabled when `REDIS_URL` set; `location:update` is throttled to 1 per 3s per delivery per socket
 
 ---
 
@@ -134,6 +176,10 @@ routes/ (Zod validation) → controllers/ (req/res) → services/ (logic) → re
 | `AIRTEL_BASE_URL` | `https://openapi.airtel.africa` |
 | `AIRTEL_CLIENT_ID/CLIENT_SECRET` | Airtel auth credentials |
 | `AIRTEL_MERCHANT_PIN` | Required for Airtel B2C payouts |
+| `REDIS_URL` | Optional — shared rate-limit store, cache, Socket.IO adapter. Unset = in-memory fallback |
+| `RATE_LIMIT_GLOBAL_MAX` | `200` — global req/min/IP cap |
+| `TRUST_PROXY` | `1` behind nginx so `req.ip` is the real client; defaults to `1` in prod |
+| `CLUSTER_WORKERS` | Worker count for `npm run start:cluster` (default: CPU count in prod) |
 
 ---
 
@@ -526,4 +572,4 @@ All OTPs: 6-digit numeric, bcrypt-hashed before DB storage, single-use.
 | Courier efficiency scoring | ✅ Auto-calculated, affects broadcast order |
 | Delivery state machine | ✅ All transitions enforced |
 | Real-time WebSocket | ✅ GPS relay, job dispatch, chat |
-| Postman collection | ✅ 110 requests, 14 folders |
+| Postman collection | ✅ 116 requests, 14 folders |

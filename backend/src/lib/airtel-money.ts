@@ -23,36 +23,58 @@ const CLIENT_SEC = process.env.AIRTEL_CLIENT_SECRET ?? '';
 const COUNTRY    = 'RW';
 const CURRENCY   = 'RWF';
 
-// ─── Token cache ───────────────────────────────────────────────────────────────
+// ─── Token cache (Redis-backed, shared across instances) ───────────────────────
+
+import { cacheGet, cacheSet } from './cache';
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
+let refreshLock: Promise<string> | null = null;
 
 async function getBearerToken(): Promise<string> {
   if (cachedToken && Date.now() < cachedToken.expiresAt - 60_000) {
     return cachedToken.token;
   }
 
-  const res = await fetch(`${BASE_URL}/auth/oauth2/token`, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({
-      client_id:     CLIENT_ID,
-      client_secret: CLIENT_SEC,
-      grant_type:    'client_credentials',
-    }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`[Airtel] Token fetch failed (${res.status}): ${body}`);
+  // Shared Redis cache — lets every worker reuse the same token
+  const shared = await cacheGet<string>('airtel:token');
+  if (shared) {
+    cachedToken = { token: shared, expiresAt: Date.now() + 60_000 };
+    return shared;
   }
 
-  const data = await res.json() as { access_token: string; expires_in: number };
-  cachedToken = {
-    token:     data.access_token,
-    expiresAt: Date.now() + data.expires_in * 1000,
-  };
-  return data.access_token;
+  // Dedupe concurrent refreshes so only one worker hits the OAuth endpoint
+  if (refreshLock) return refreshLock;
+  refreshLock = (async () => {
+    const res = await fetch(`${BASE_URL}/auth/oauth2/token`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        client_id:     CLIENT_ID,
+        client_secret: CLIENT_SEC,
+        grant_type:    'client_credentials',
+      }),
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`[Airtel] Token fetch failed (${res.status}): ${body}`);
+    }
+
+    const data = await res.json() as { access_token: string; expires_in: number };
+    const ttl  = Math.max(data.expires_in - 120, 60);
+    cachedToken = {
+      token:     data.access_token,
+      expiresAt: Date.now() + data.expires_in * 1000,
+    };
+    cacheSet('airtel:token', data.access_token, ttl).catch(() => {});
+    return data.access_token;
+  })();
+
+  try {
+    return await refreshLock;
+  } finally {
+    refreshLock = null;
+  }
 }
 
 // ─── Types ─────────────────────────────────────────────────────────────────────

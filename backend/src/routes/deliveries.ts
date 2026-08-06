@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { authenticate, requireRole } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
+import { createLimiter } from '../lib/rateLimit';
 import * as ctrl     from '../controllers/delivery.controller';
 import * as chatCtrl from '../controllers/chat.controller';
 import * as refundCtrl from '../controllers/refund.controller';
@@ -65,8 +66,11 @@ router.post('/:id/confirm-agreement',
   ctrl.confirmAgreement,
 );
 
+// Money movement — the sender's MoMo is charged here; keep it tight
+const paymentLimiter = createLimiter('payment');
+
 router.post('/:id/pay',
-  authenticate, requireRole(UserRole.SENDER),
+  authenticate, requireRole(UserRole.SENDER), paymentLimiter,
   validateBody(z.object({
     agreedDeliveryTime: z.number().int().min(1).max(120).optional(),
     // Sender's MTN/Airtel phone — receives the USSD approval pop-up (required)
